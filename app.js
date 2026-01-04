@@ -1,7 +1,7 @@
 // FischPedia Web Interface
-const GITHUB_REPO = 'LabyEDM/fischhelper';
+const GITHUB_REPO = 'LabyEDM/FischHelper';
 const GITHUB_OWNER = 'LabyEDM';
-const GITHUB_REPO_NAME = 'fischhelper';
+const GITHUB_REPO_NAME = 'FischHelper';
 const DATA_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/fishdata.json`;
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -32,10 +32,18 @@ function switchTab(tabName) {
     }
 }
 
-// Form submission
+// Form submission - show preview
 document.getElementById('fishForm').addEventListener('submit', function(e) {
     e.preventDefault();
     generateFishData();
+});
+
+// Publish button - validate and publish
+document.getElementById('publishBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    if (validateForm()) {
+        addFishToGitHub();
+    }
 });
 
 // Generate formatted fish data
@@ -63,13 +71,25 @@ function generateFishData() {
     document.getElementById('previewCode').textContent = formattedData;
     document.getElementById('preview').style.display = 'block';
     
-    // Show "Add to GitHub" button if token is available
-    if (githubToken) {
-        document.getElementById('addToGitHubBtn').style.display = 'inline-block';
-    }
-    
     // Scroll to preview
     document.getElementById('preview').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Validate form before publishing
+function validateForm() {
+    const fishName = document.getElementById('fishName').value.trim();
+    const rarity = document.getElementById('rarity').value;
+    const location = document.getElementById('location').value.trim();
+    const value = document.getElementById('value').value;
+    const powerRequired = document.getElementById('powerRequired').value;
+    const speed = document.getElementById('speed').value;
+    const controlNeeded = document.getElementById('controlNeeded').value;
+    
+    if (!fishName || !rarity || !location || !value || !powerRequired || !speed || !controlNeeded) {
+        alert('Please fill in all required fields (marked with *)');
+        return false;
+    }
+    return true;
 }
 
 // Token management UI removed - will be added back later
@@ -78,7 +98,12 @@ function generateFishData() {
 // Add fish directly to GitHub
 async function addFishToGitHub() {
     if (!githubToken) {
-        alert('GitHub token not found. Token management UI will be added back later.');
+        alert('GitHub token not found. Please configure token access. Token management UI will be added back later.');
+        return;
+    }
+    
+    // Validate form first
+    if (!validateForm()) {
         return;
     }
     
@@ -91,12 +116,6 @@ async function addFishToGitHub() {
     const controlNeeded = document.getElementById('controlNeeded').value;
     const notes = document.getElementById('notes').value.trim();
     const bestTime = document.getElementById('bestTime').value.trim();
-    
-    // Validate
-    if (!fishName || !rarity || !location || !value || !powerRequired || !speed || !controlNeeded) {
-        alert('Please fill in all required fields (marked with *)');
-        return;
-    }
     
     // Format the new fish entry
     const newEntry = `${fishName}|${rarity}|${location}|${value}|${powerRequired}|${speed}|${controlNeeded}|${notes}|${bestTime}`;
@@ -156,18 +175,38 @@ async function addFishToGitHub() {
         
         if (updateResponse.ok) {
             const result = await updateResponse.json();
-            alert(`✅ Successfully added "${fishName}" to GitHub!\n\nCommit: ${result.commit.sha.substring(0, 7)}\n\nRefresh the "View Database" tab to see your addition.`);
+            // Show success message
+            const previewDiv = document.getElementById('preview');
+            previewDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h3>✅ Successfully Published!</h3>
+                    <p><strong>Fish:</strong> ${fishName}</p>
+                    <p><strong>Commit:</strong> ${result.commit.sha.substring(0, 7)}</p>
+                    <p>Your fish has been added to the GitHub database!</p>
+                    <p style="margin-top: 15px;">
+                        <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/commit/${result.commit.sha}" target="_blank" class="github-link">
+                            View Commit on GitHub
+                        </a>
+                    </p>
+                </div>
+            `;
+            previewDiv.style.display = 'block';
+            
+            // Clear form
             clearForm();
+            
             // Reload database if on view tab
-            if (document.getElementById('view-tab').classList.contains('active')) {
-                loadFishDatabase();
-            }
+            setTimeout(() => {
+                if (document.getElementById('view-tab').classList.contains('active')) {
+                    loadFishDatabase();
+                }
+            }, 1000);
         } else {
             const error = await updateResponse.json();
             throw new Error(error.message || 'Failed to update file');
         }
     } catch (error) {
-        alert(`❌ Error adding fish to GitHub:\n${error.message}\n\nMake sure your token has 'repo' permissions.`);
+        alert(`❌ Error publishing to GitHub:\n${error.message}\n\nMake sure your token has 'repo' permissions and the repository exists.`);
         console.error('GitHub API Error:', error);
     }
 }
@@ -205,7 +244,7 @@ async function loadFishDatabase() {
                 <strong>⚠️ Could not load from GitHub.</strong> 
                 This might be because the repository is private or the file doesn't exist yet.
                 <br><br>
-                <a href="https://github.com/${GITHUB_REPO}/tree/main/data" target="_blank" class="github-link">
+                <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/tree/main/data" target="_blank" class="github-link">
                     Check GitHub Repository
                 </a>
             </div>
@@ -319,13 +358,22 @@ function updateAutoSubmitInfo() {
     const infoDiv = document.getElementById('autoSubmitInfo');
     if (infoDiv) {
         if (githubToken) {
-            infoDiv.innerHTML = '<p><strong>✅ Auto-Submit Enabled!</strong> Click "Add to GitHub" above to automatically add the fish.</p>';
-            // Show the button if token exists
-            if (document.getElementById('addToGitHubBtn')) {
-                document.getElementById('addToGitHubBtn').style.display = 'inline-block';
-            }
+            infoDiv.innerHTML = '<p><strong>✅ Publish Enabled!</strong> Click "🚀 Publish to GitHub" above to automatically add the fish to the database.</p>';
         } else {
-            infoDiv.innerHTML = '<p><strong>💡 Auto-Submit:</strong> Token management UI will be added back later.</p>';
+            infoDiv.innerHTML = '<p><strong>💡 Publish:</strong> Token management UI will be added back later. For now, token must be configured manually.</p>';
+        }
+    }
+    
+    // Update publish button state
+    const publishBtn = document.getElementById('publishBtn');
+    if (publishBtn) {
+        if (githubToken) {
+            publishBtn.disabled = false;
+            publishBtn.style.opacity = '1';
+        } else {
+            publishBtn.disabled = true;
+            publishBtn.style.opacity = '0.6';
+            publishBtn.title = 'GitHub token required';
         }
     }
 }
