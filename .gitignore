@@ -1,0 +1,16 @@
+# AutoHotkey
+*.ahk.bak
+*.ahk~
+
+# Config files
+config.ini
+fishdata.json
+roddata.json
+
+# Temporary files
+*.tmp
+
+# Windows
+Thumbs.db
+Desktop.ini
+
