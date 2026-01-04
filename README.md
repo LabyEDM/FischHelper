@@ -17,9 +17,9 @@ A community-driven fishing helper overlay that displays rod stats and provides a
 
 ## Installation
 
-1. Download `FischV12.ahk`
+1. Download `FischHelper.ahk`
 2. Install [AutoHotkey v1.1](https://www.autohotkey.com/download/ahk-install.exe)
-3. Run `FischV12.ahk`
+3. Run `FischHelper.ahk`
 4. Launch Roblox - the overlay will automatically activate
 
 ## Usage
@@ -86,4 +86,3 @@ This project is open source and available for community use and modification.
 ## Disclaimer
 
 This tool is for informational purposes only. It does not automate gameplay or violate Roblox's Terms of Service.
-
