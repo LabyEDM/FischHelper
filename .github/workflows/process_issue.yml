@@ -103,28 +103,48 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          
+          # Pull latest changes to avoid conflicts
+          git pull --rebase origin main || true
+          
+          # Add and commit
           git add data/fishdata.json
           git commit -m "Add fish: ${{ steps.extract-data.outputs.fish_name }} (from issue #${{ steps.extract-data.outputs.issue_number }})"
-          git push origin HEAD:main
+          
+          # Push with retry logic
+          git push origin HEAD:main || {
+            echo "Push failed, pulling latest and retrying..."
+            git pull --rebase origin main
+            git push origin HEAD:main
+          }
+      
+      - name: Get commit SHA
+        id: get-commit
+        run: |
+          COMMIT_SHA=$(git rev-parse HEAD)
+          echo "commit_sha=${COMMIT_SHA}" >> $GITHUB_OUTPUT
       
       - name: Comment on issue
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '✅ Fish entry processed successfully! The fish has been added to the database.\n\n' +
-                    'View the commit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}'
-            })
+            const commitSha = '${{ steps.get-commit.outputs.commit_sha }}';
+            const repo = context.repo;
             
-            # Close the issue
-            github.rest.issues.update({
+            await github.rest.issues.createComment({
               issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: repo.owner,
+              repo: repo.repo,
+              body: `✅ Fish entry processed successfully! The fish has been added to the database.\n\n` +
+                    `View the commit: https://github.com/${repo.owner}/${repo.repo}/commit/${commitSha}`
+            });
+            
+            // Close the issue
+            await github.rest.issues.update({
+              issue_number: context.issue.number,
+              owner: repo.owner,
+              repo: repo.repo,
               state: 'closed'
-            })
+            });
 
