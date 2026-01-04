@@ -76,7 +76,7 @@ jobs:
             echo "content=" >> $GITHUB_OUTPUT
           fi
       
-      - name: Update fish data
+      - name: Update fish data (initial)
         run: |
           FISH_NAME="${{ steps.extract-data.outputs.fish_name }}"
           NEW_ENTRY="${{ steps.extract-data.outputs.fish_entry }}"
@@ -99,24 +99,50 @@ jobs:
           echo -e "$UPDATED" > data/fishdata.json
           echo "Added/updated entry for ${FISH_NAME}"
       
+      - name: Fetch latest changes
+        run: |
+          git fetch origin main
+      
+      - name: Update fish data (with latest changes)
+        run: |
+          # Pull latest to get any concurrent updates
+          git pull --rebase origin main || git pull origin main
+          
+          # Re-read the file in case it was updated
+          if [ -f "data/fishdata.json" ]; then
+            EXISTING=$(cat data/fishdata.json)
+          else
+            EXISTING=""
+          fi
+          
+          FISH_NAME="${{ steps.extract-data.outputs.fish_name }}"
+          NEW_ENTRY="${{ steps.extract-data.outputs.fish_entry }}"
+          
+          # Remove old entry if exists
+          if echo "$EXISTING" | grep -q "^${FISH_NAME}|"; then
+            UPDATED=$(echo "$EXISTING" | grep -v "^${FISH_NAME}|")
+            echo "Removed existing entry for ${FISH_NAME}"
+          else
+            UPDATED="$EXISTING"
+          fi
+          
+          # Add new entry
+          if [ -n "$UPDATED" ] && [ "${UPDATED: -1}" != "\n" ]; then
+            UPDATED="${UPDATED}\n"
+          fi
+          UPDATED="${UPDATED}${NEW_ENTRY}\n"
+          
+          # Write updated content
+          echo -e "$UPDATED" > data/fishdata.json
+          echo "Added/updated entry for ${FISH_NAME}"
+      
       - name: Commit and push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
-          # Pull latest changes to avoid conflicts
-          git pull --rebase origin main || true
-          
-          # Add and commit
           git add data/fishdata.json
           git commit -m "Add fish: ${{ steps.extract-data.outputs.fish_name }} (from issue #${{ steps.extract-data.outputs.issue_number }})"
-          
-          # Push with retry logic
-          git push origin HEAD:main || {
-            echo "Push failed, pulling latest and retrying..."
-            git pull --rebase origin main
-            git push origin HEAD:main
-          }
+          git push origin main
       
       - name: Get commit SHA
         id: get-commit
