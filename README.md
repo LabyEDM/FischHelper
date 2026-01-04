@@ -47,10 +47,38 @@ Press F1 to open the fish search interface on the right side:
 - Click any fish to view detailed information
 - Data automatically syncs from GitHub on launch
 
+## Web Interface
+
+We have a user-friendly web interface for managing the fish database!
+
+### Access the Web Interface
+
+**Option 1: GitHub Pages** (if enabled)
+- Visit: `https://LabyEDM.github.io/fischhelper/`
+
+**Option 2: Local**
+- Open `web/index.html` in your browser
+- Or use a local server: `python -m http.server 8000` then visit `http://localhost:8000`
+
+### Features
+- 📝 Easy form to add new fish
+- 📋 Automatic data format generation
+- 👀 View entire database
+- 🔗 Direct GitHub integration links
+- 📱 Mobile-friendly interface
+
 ## Contributing to the Fish Database
 
 The fish database is community-driven! To add or update fish information:
 
+### Using the Web Interface (Recommended)
+1. Open the web interface (see above)
+2. Fill out the "Add Fish" form
+3. Click "Generate Data Format"
+4. Click "Edit on GitHub" to submit your entry
+5. Create a Pull Request
+
+### Manual Method
 1. Fork this repository
 2. Edit `data/fishdata.json`
 3. Follow the format: `fishname|rarity|location|value|powerRequired|speed|controlNeeded|notes|bestTime`
@@ -71,6 +99,14 @@ Tuna|Rare|Ocean|50|25|Very Fast|15|Deep ocean fish, requires high stats|Night
 1. Fork this repository
 2. Update `GitHubRepo` in the settings to match your repository
 3. The script will automatically check for updates on launch
+
+### Enable GitHub Pages (Optional)
+
+To host the web interface on GitHub Pages:
+
+1. Go to repository Settings → Pages
+2. Set source to `/web` folder
+3. Save - your web interface will be available at `https://yourusername.github.io/fischhelper/`
 
 ## Requirements
 
