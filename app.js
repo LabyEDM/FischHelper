@@ -32,21 +32,13 @@ function switchTab(tabName) {
     }
 }
 
-// Form submission - show preview
+// Form submission - publish directly to GitHub
 document.getElementById('fishForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    generateFishData();
+    addFishToGitHub();
 });
 
-// Publish button - validate and publish
-document.getElementById('publishBtn').addEventListener('click', function(e) {
-    e.preventDefault();
-    if (validateForm()) {
-        addFishToGitHub();
-    }
-});
-
-// Generate formatted fish data
+// Generate formatted fish data (for internal use)
 function generateFishData() {
     const fishName = document.getElementById('fishName').value.trim();
     const rarity = document.getElementById('rarity').value;
@@ -58,21 +50,8 @@ function generateFishData() {
     const notes = document.getElementById('notes').value.trim();
     const bestTime = document.getElementById('bestTime').value.trim();
     
-    // Validate required fields
-    if (!fishName || !rarity || !location || !value || !powerRequired || !speed || !controlNeeded) {
-        alert('Please fill in all required fields (marked with *)');
-        return;
-    }
-    
     // Format: fishname|rarity|location|value|powerRequired|speed|controlNeeded|notes|bestTime
-    const formattedData = `${fishName}|${rarity}|${location}|${value}|${powerRequired}|${speed}|${controlNeeded}|${notes}|${bestTime}`;
-    
-    // Show preview
-    document.getElementById('previewCode').textContent = formattedData;
-    document.getElementById('preview').style.display = 'block';
-    
-    // Scroll to preview
-    document.getElementById('preview').scrollIntoView({ behavior: 'smooth' });
+    return `${fishName}|${rarity}|${location}|${value}|${powerRequired}|${speed}|${controlNeeded}|${notes}|${bestTime}`;
 }
 
 // Validate form before publishing
@@ -95,7 +74,7 @@ function validateForm() {
 // Token management UI removed - will be added back later
 // Token is automatically loaded from localStorage on page load
 
-// Add fish directly to GitHub
+// Add fish directly to GitHub - edits data/fishdata.json in the repository
 async function addFishToGitHub() {
     if (!githubToken) {
         alert('GitHub token not found. Please configure token access. Token management UI will be added back later.');
@@ -117,11 +96,17 @@ async function addFishToGitHub() {
     const notes = document.getElementById('notes').value.trim();
     const bestTime = document.getElementById('bestTime').value.trim();
     
-    // Format the new fish entry
-    const newEntry = `${fishName}|${rarity}|${location}|${value}|${powerRequired}|${speed}|${controlNeeded}|${notes}|${bestTime}`;
+    // Format the new fish entry using the helper function
+    const newEntry = generateFishData();
+    
+    // Show loading state
+    const publishBtn = document.getElementById('publishBtn');
+    const originalText = publishBtn.textContent;
+    publishBtn.disabled = true;
+    publishBtn.textContent = '⏳ Publishing...';
     
     try {
-        // Get current file content
+        // Get current file content from data/fishdata.json
         const fileResponse = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/contents/data/fishdata.json`, {
             headers: {
                 'Authorization': `token ${githubToken}`,
@@ -179,18 +164,26 @@ async function addFishToGitHub() {
             const previewDiv = document.getElementById('preview');
             previewDiv.innerHTML = `
                 <div class="alert alert-success">
-                    <h3>✅ Successfully Published!</h3>
+                    <h3>✅ Successfully Published to GitHub!</h3>
                     <p><strong>Fish:</strong> ${fishName}</p>
+                    <p><strong>File Updated:</strong> <code>data/fishdata.json</code></p>
                     <p><strong>Commit:</strong> ${result.commit.sha.substring(0, 7)}</p>
-                    <p>Your fish has been added to the GitHub database!</p>
+                    <p>Your fish has been directly added to the repository's main branch!</p>
                     <p style="margin-top: 15px;">
                         <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/commit/${result.commit.sha}" target="_blank" class="github-link">
                             View Commit on GitHub
+                        </a>
+                        <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/blob/main/data/fishdata.json" target="_blank" class="github-link" style="margin-left: 10px;">
+                            View Updated File
                         </a>
                     </p>
                 </div>
             `;
             previewDiv.style.display = 'block';
+            
+            // Reset button
+            publishBtn.disabled = false;
+            publishBtn.textContent = originalText;
             
             // Clear form
             clearForm();
@@ -206,6 +199,10 @@ async function addFishToGitHub() {
             throw new Error(error.message || 'Failed to update file');
         }
     } catch (error) {
+        // Reset button on error
+        publishBtn.disabled = false;
+        publishBtn.textContent = originalText;
+        
         alert(`❌ Error publishing to GitHub:\n${error.message}\n\nMake sure your token has 'repo' permissions and the repository exists.`);
         console.error('GitHub API Error:', error);
     }
