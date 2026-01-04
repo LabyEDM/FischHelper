@@ -6,10 +6,9 @@ on:
 
 jobs:
   process-fish-entry:
-    # Only run if issue has the "fish-entry" label or title starts with "Add Fish:"
-    if: |
-      contains(github.event.issue.labels.*.name, 'fish-entry') ||
-      startsWith(github.event.issue.title, 'Add Fish:')
+    # Only run if issue title starts with "Add Fish:"
+    # The web interface automatically sets the title to "Add Fish: [fish name]"
+    if: startsWith(github.event.issue.title, 'Add Fish:')
     
     runs-on: ubuntu-latest
     
