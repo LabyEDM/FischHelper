@@ -2,10 +2,13 @@
 *.ahk.bak
 *.ahk~
 
-# Config files
+# Config files (local user configs - ignore these)
 config.ini
-fishdata.json
 roddata.json
+
+# Local fish data (user's downloaded copy - ignore root level only)
+# But keep data/fishdata.json in repo as template
+/fishdata.json
 
 # Temporary files
 *.tmp

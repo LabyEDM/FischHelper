@@ -1,0 +1,15 @@
+// FischPedia Community Database
+// Format: fishname|rarity|location|value|powerRequired|speed|controlNeeded|notes|bestTime
+// Add new fish entries below following the same format
+
+Common Carp|Common|Freshwater|10|5|Slow|3|Found in most freshwater areas|
+Bass|Common|Freshwater|15|8|Medium|5|Common in lakes and rivers|
+Trout|Common|Freshwater|12|6|Medium|4|Prefers cold water|
+Salmon|Uncommon|Freshwater|25|12|Fast|8|Found in rivers, requires good control|
+Pike|Uncommon|Freshwater|30|15|Fast|10|Aggressive fish, high power needed|
+Tuna|Rare|Ocean|50|25|Very Fast|15|Deep ocean fish, requires high stats|
+Shark|Epic|Ocean|100|50|Very Fast|30|Dangerous, requires maxed rod stats|
+Marlin|Legendary|Ocean|200|75|Extreme|50|Ultimate challenge, needs perfect setup|
+Goldfish|Common|Any|5|3|Very Slow|2|Easy catch, low value|
+Catfish|Common|Freshwater|18|10|Slow|6|Bottom feeder, patient fishing|
+
