@@ -258,6 +258,23 @@
             border: 1px solid #bee5eb;
         }
         
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        small {
+            font-size: 0.9em;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        
         .github-section {
             background: #f8f9fa;
             border-radius: 8px;
@@ -373,6 +390,7 @@
                     
                     <div class="btn-group">
                         <button type="submit" class="btn btn-primary">Generate Data Format</button>
+                        <button type="button" class="btn btn-primary" onclick="addFishToGitHub()" id="addToGitHubBtn" style="display: none;">Add to GitHub</button>
                         <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
                     </div>
                 </form>
@@ -382,7 +400,10 @@
                     <div class="preview-code" id="previewCode"></div>
                     <div class="github-section">
                         <h3>🚀 Submit to GitHub</h3>
-                        <p>Copy the formatted data above and follow these steps:</p>
+                        <div id="autoSubmitInfo">
+                            <p><strong>Auto-Submit Available!</strong> If you've saved a GitHub token, you can click "Add to GitHub" above to automatically add the fish.</p>
+                        </div>
+                        <p style="margin-top: 15px;">Or manually submit by following these steps:</p>
                         <ol style="margin-left: 20px; margin-top: 10px;">
                             <li>Go to the <a href="https://github.com/LabyEDM/fischhelper/tree/main/data" target="_blank">data folder</a> on GitHub</li>
                             <li>Click on <code>fishdata.json</code></li>
@@ -413,6 +434,11 @@
                 <div class="github-section">
                     <h3>🔗 GitHub Integration</h3>
                     <p>This tool helps you contribute to the FischPedia community database hosted on GitHub.</p>
+                    
+                    <div class="alert alert-success" style="margin-top: 20px;">
+                        <strong>✅ GitHub Integration Active</strong>
+                        <p style="margin-top: 10px;">Auto-submit functionality is enabled. You can add fish directly to GitHub using the "Add to GitHub" button in the "Add Fish" tab.</p>
+                    </div>
                     
                     <h3 style="margin-top: 20px;">How to Contribute:</h3>
                     <ol style="margin-left: 20px; margin-top: 10px;">

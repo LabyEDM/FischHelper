@@ -1,6 +1,12 @@
 // FischPedia Web Interface
 const GITHUB_REPO = 'LabyEDM/fischhelper';
+const GITHUB_OWNER = 'LabyEDM';
+const GITHUB_REPO_NAME = 'fischhelper';
 const DATA_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/fishdata.json`;
+const GITHUB_API_BASE = 'https://api.github.com';
+
+// Load saved token from localStorage
+let githubToken = localStorage.getItem('github_token') || '';
 
 // Tab switching
 function switchTab(tabName) {
@@ -57,8 +63,113 @@ function generateFishData() {
     document.getElementById('previewCode').textContent = formattedData;
     document.getElementById('preview').style.display = 'block';
     
+    // Show "Add to GitHub" button if token is available
+    if (githubToken) {
+        document.getElementById('addToGitHubBtn').style.display = 'inline-block';
+    }
+    
     // Scroll to preview
     document.getElementById('preview').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Token management UI removed - will be added back later
+// Token is automatically loaded from localStorage on page load
+
+// Add fish directly to GitHub
+async function addFishToGitHub() {
+    if (!githubToken) {
+        alert('GitHub token not found. Token management UI will be added back later.');
+        return;
+    }
+    
+    const fishName = document.getElementById('fishName').value.trim();
+    const rarity = document.getElementById('rarity').value;
+    const location = document.getElementById('location').value.trim();
+    const value = document.getElementById('value').value;
+    const powerRequired = document.getElementById('powerRequired').value;
+    const speed = document.getElementById('speed').value;
+    const controlNeeded = document.getElementById('controlNeeded').value;
+    const notes = document.getElementById('notes').value.trim();
+    const bestTime = document.getElementById('bestTime').value.trim();
+    
+    // Validate
+    if (!fishName || !rarity || !location || !value || !powerRequired || !speed || !controlNeeded) {
+        alert('Please fill in all required fields (marked with *)');
+        return;
+    }
+    
+    // Format the new fish entry
+    const newEntry = `${fishName}|${rarity}|${location}|${value}|${powerRequired}|${speed}|${controlNeeded}|${notes}|${bestTime}`;
+    
+    try {
+        // Get current file content
+        const fileResponse = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/contents/data/fishdata.json`, {
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!fileResponse.ok) {
+            throw new Error(`Failed to get file: ${fileResponse.statusText}`);
+        }
+        
+        const fileData = await fileResponse.json();
+        const currentContent = atob(fileData.content.replace(/\n/g, ''));
+        
+        // Check if fish already exists
+        if (currentContent.includes(`${fishName}|`)) {
+            if (!confirm(`Fish "${fishName}" already exists. Do you want to replace it?`)) {
+                return;
+            }
+            // Remove old entry
+            const lines = currentContent.split('\n');
+            const filteredLines = lines.filter(line => !line.trim().startsWith(`${fishName}|`));
+            var updatedContent = filteredLines.join('\n').trim();
+        } else {
+            var updatedContent = currentContent.trim();
+        }
+        
+        // Add new entry
+        if (updatedContent && !updatedContent.endsWith('\n')) {
+            updatedContent += '\n';
+        }
+        updatedContent += newEntry + '\n';
+        
+        // Encode content
+        const encodedContent = btoa(updatedContent);
+        
+        // Update file
+        const updateResponse = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/contents/data/fishdata.json`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `Add fish: ${fishName}`,
+                content: encodedContent,
+                sha: fileData.sha
+            })
+        });
+        
+        if (updateResponse.ok) {
+            const result = await updateResponse.json();
+            alert(`✅ Successfully added "${fishName}" to GitHub!\n\nCommit: ${result.commit.sha.substring(0, 7)}\n\nRefresh the "View Database" tab to see your addition.`);
+            clearForm();
+            // Reload database if on view tab
+            if (document.getElementById('view-tab').classList.contains('active')) {
+                loadFishDatabase();
+            }
+        } else {
+            const error = await updateResponse.json();
+            throw new Error(error.message || 'Failed to update file');
+        }
+    } catch (error) {
+        alert(`❌ Error adding fish to GitHub:\n${error.message}\n\nMake sure your token has 'repo' permissions.`);
+        console.error('GitHub API Error:', error);
+    }
 }
 
 // Clear form
@@ -198,5 +309,26 @@ document.addEventListener('DOMContentLoaded', function() {
     if (urlParams.get('tab') === 'view') {
         switchTab('view');
     }
+    
+    // Update auto-submit info
+    updateAutoSubmitInfo();
 });
+
+// Update auto-submit info display
+function updateAutoSubmitInfo() {
+    const infoDiv = document.getElementById('autoSubmitInfo');
+    if (infoDiv) {
+        if (githubToken) {
+            infoDiv.innerHTML = '<p><strong>✅ Auto-Submit Enabled!</strong> Click "Add to GitHub" above to automatically add the fish.</p>';
+            // Show the button if token exists
+            if (document.getElementById('addToGitHubBtn')) {
+                document.getElementById('addToGitHubBtn').style.display = 'inline-block';
+            }
+        } else {
+            infoDiv.innerHTML = '<p><strong>💡 Auto-Submit:</strong> Token management UI will be added back later.</p>';
+        }
+    }
+}
+
+// Token management UI removed - will be added back later
 
