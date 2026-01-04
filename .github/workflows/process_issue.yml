@@ -18,22 +18,28 @@ jobs:
       
       - name: Extract fish data from issue
         id: extract-data
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          ISSUE_BODY="${{ github.event.issue.body }}"
+          # Write issue body to a file to avoid shell interpretation issues with special characters
+          echo "$ISSUE_BODY" > /tmp/issue_body.txt
+          
+          # Read from file
+          ISSUE_BODY_CONTENT=$(cat /tmp/issue_body.txt)
           
           # Extract formatted entry from code block (look for ``` or `)
-          FISH_ENTRY=$(echo "$ISSUE_BODY" | grep -A 1 "Formatted Entry:" | tail -n 1 | sed 's/```//g' | sed 's/`//g' | xargs)
+          FISH_ENTRY=$(echo "$ISSUE_BODY_CONTENT" | grep -A 1 "Formatted Entry:" | tail -n 1 | sed 's/```//g' | sed 's/`//g' | xargs)
           
           # If not found, try to extract from the issue body directly
           if [ -z "$FISH_ENTRY" ] || [ "$FISH_ENTRY" == "" ]; then
             # Try to find pipe-delimited line in the body
-            FISH_ENTRY=$(echo "$ISSUE_BODY" | grep -E "^[^|]+\|[^|]+\|" | head -n 1 | xargs)
+            FISH_ENTRY=$(echo "$ISSUE_BODY_CONTENT" | grep -E "^[^|]+\|[^|]+\|" | head -n 1 | xargs)
           fi
           
           if [ -z "$FISH_ENTRY" ] || [ "$FISH_ENTRY" == "" ]; then
             echo "❌ Could not extract fish entry from issue body"
             echo "Issue body preview:"
-            echo "$ISSUE_BODY" | head -n 20
+            echo "$ISSUE_BODY_CONTENT" | head -n 20
             exit 1
           fi
           
