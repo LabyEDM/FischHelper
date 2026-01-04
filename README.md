@@ -55,9 +55,10 @@ We have a user-friendly web interface for managing the fish database!
 
 **Option 1: GitHub Pages** (if enabled)
 - Visit: `https://LabyEDM.github.io/fischhelper/`
+- The web interface files are in the root directory for easy GitHub Pages setup
 
 **Option 2: Local**
-- Open `web/index.html` in your browser
+- Open `index.html` in your browser
 - Or use a local server: `python -m http.server 8000` then visit `http://localhost:8000`
 
 ### Features
@@ -105,8 +106,9 @@ Tuna|Rare|Ocean|50|25|Very Fast|15|Deep ocean fish, requires high stats|Night
 To host the web interface on GitHub Pages:
 
 1. Go to repository Settings → Pages
-2. Set source to `/web` folder
+2. Set source to `/root` or `/ (root)` folder
 3. Save - your web interface will be available at `https://yourusername.github.io/fischhelper/`
+4. The `index.html` file in the root will be served automatically
 
 ## Requirements
 
