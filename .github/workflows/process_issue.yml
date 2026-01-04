@@ -4,6 +4,10 @@ on:
   issues:
     types: [opened, edited]
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   process-fish-entry:
     # Only run if issue title starts with "Add Fish:"
@@ -15,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Extract fish data from issue
         id: extract-data
@@ -99,7 +105,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git add data/fishdata.json
           git commit -m "Add fish: ${{ steps.extract-data.outputs.fish_name }} (from issue #${{ steps.extract-data.outputs.issue_number }})"
-          git push
+          git push origin HEAD:main
       
       - name: Comment on issue
         uses: actions/github-script@v6
