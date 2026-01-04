@@ -76,15 +76,22 @@ function validateForm() {
 
 // Add fish directly to GitHub - edits data/fishdata.json in the repository
 async function addFishToGitHub() {
+    console.log('addFishToGitHub called');
+    console.log('Token exists:', !!githubToken);
+    
     if (!githubToken) {
-        alert('GitHub token not found. Please configure token access. Token management UI will be added back later.');
+        alert('GitHub token not found. Please configure token access.\n\nTo add a token:\n1. Open browser console (F12)\n2. Run: localStorage.setItem("github_token", "your_token_here")\n3. Refresh the page');
+        console.error('No GitHub token found');
         return;
     }
     
     // Validate form first
     if (!validateForm()) {
+        console.error('Form validation failed');
         return;
     }
+    
+    console.log('Form validated, proceeding with publish...');
     
     const fishName = document.getElementById('fishName').value.trim();
     const rarity = document.getElementById('rarity').value;
@@ -106,6 +113,7 @@ async function addFishToGitHub() {
     publishBtn.textContent = '⏳ Publishing...';
     
     try {
+        console.log('Fetching current file from GitHub...');
         // Get current file content from data/fishdata.json
         const fileResponse = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/contents/data/fishdata.json`, {
             headers: {
@@ -114,8 +122,12 @@ async function addFishToGitHub() {
             }
         });
         
+        console.log('File response status:', fileResponse.status);
+        
         if (!fileResponse.ok) {
-            throw new Error(`Failed to get file: ${fileResponse.statusText}`);
+            const errorData = await fileResponse.json();
+            console.error('File fetch error:', errorData);
+            throw new Error(`Failed to get file: ${fileResponse.statusText} - ${errorData.message || ''}`);
         }
         
         const fileData = await fileResponse.json();
@@ -196,6 +208,7 @@ async function addFishToGitHub() {
             }, 1000);
         } else {
             const error = await updateResponse.json();
+            console.error('Update error response:', error);
             throw new Error(error.message || 'Failed to update file');
         }
     } catch (error) {
@@ -203,8 +216,28 @@ async function addFishToGitHub() {
         publishBtn.disabled = false;
         publishBtn.textContent = originalText;
         
-        alert(`❌ Error publishing to GitHub:\n${error.message}\n\nMake sure your token has 'repo' permissions and the repository exists.`);
-        console.error('GitHub API Error:', error);
+        console.error('Full error details:', error);
+        const errorMessage = error.message || 'Unknown error';
+        
+        // Show error in preview box
+        const previewDiv = document.getElementById('preview');
+        previewDiv.innerHTML = `
+            <div class="alert alert-danger">
+                <h3>❌ Error Publishing to GitHub</h3>
+                <p><strong>Error:</strong> ${errorMessage}</p>
+                <p style="margin-top: 10px;">Possible causes:</p>
+                <ul style="margin-left: 20px; margin-top: 5px;">
+                    <li>Token doesn't have 'repo' permissions</li>
+                    <li>Repository name is incorrect</li>
+                    <li>File path doesn't exist</li>
+                    <li>Network error</li>
+                </ul>
+                <p style="margin-top: 15px;">Check the browser console (F12) for more details.</p>
+            </div>
+        `;
+        previewDiv.style.display = 'block';
+        
+        alert(`❌ Error publishing to GitHub:\n${errorMessage}\n\nCheck the browser console (F12) for details.\n\nMake sure your token has 'repo' permissions and the repository exists.`);
     }
 }
 
@@ -346,8 +379,22 @@ document.addEventListener('DOMContentLoaded', function() {
         switchTab('view');
     }
     
+    // Check token status
+    console.log('Page loaded. Token exists:', !!githubToken);
+    if (!githubToken) {
+        console.warn('No GitHub token found. Publishing will not work.');
+    }
+    
     // Update auto-submit info
     updateAutoSubmitInfo();
+    
+    // Add helpful message if no token
+    if (!githubToken) {
+        const publishBtn = document.getElementById('publishBtn');
+        if (publishBtn) {
+            publishBtn.title = 'GitHub token required - Open browser console (F12) and run: localStorage.setItem("github_token", "your_token")';
+        }
+    }
 });
 
 // Update auto-submit info display
@@ -361,16 +408,27 @@ function updateAutoSubmitInfo() {
         }
     }
     
+    // Update token status display
+    const tokenStatusDiv = document.getElementById('tokenStatus');
+    if (tokenStatusDiv) {
+        if (githubToken) {
+            tokenStatusDiv.innerHTML = '<div class="alert alert-success"><strong>✅ Token Configured</strong> - Ready to publish!</div>';
+        } else {
+            tokenStatusDiv.innerHTML = '<div class="alert alert-danger"><strong>⚠️ No Token Found</strong><br>To add a token, open browser console (F12) and run:<br><code style="background: #f4f4f4; padding: 2px 6px; border-radius: 3px;">localStorage.setItem("github_token", "your_token_here")</code><br>Then refresh the page.</div>';
+        }
+    }
+    
     // Update publish button state
     const publishBtn = document.getElementById('publishBtn');
     if (publishBtn) {
         if (githubToken) {
             publishBtn.disabled = false;
             publishBtn.style.opacity = '1';
+            publishBtn.title = 'Publish fish to GitHub';
         } else {
-            publishBtn.disabled = true;
-            publishBtn.style.opacity = '0.6';
-            publishBtn.title = 'GitHub token required';
+            publishBtn.disabled = false; // Allow click to show error
+            publishBtn.style.opacity = '1';
+            publishBtn.title = 'GitHub token required - Click to see instructions';
         }
     }
 }
