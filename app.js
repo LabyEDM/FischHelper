@@ -3,10 +3,6 @@ const GITHUB_REPO = 'LabyEDM/FischHelper';
 const GITHUB_OWNER = 'LabyEDM';
 const GITHUB_REPO_NAME = 'FischHelper';
 const DATA_URL = `https://raw.githubusercontent.com/${GITHUB_REPO}/main/data/fishdata.json`;
-const GITHUB_API_BASE = 'https://api.github.com';
-
-// Load saved token from localStorage
-let githubToken = localStorage.getItem('github_token') || '';
 
 // Tab switching
 function switchTab(tabName) {
@@ -32,14 +28,19 @@ function switchTab(tabName) {
     }
 }
 
-// Form submission - publish directly to GitHub
+// Form submission - open prefilled GitHub Issue
 document.getElementById('fishForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    addFishToGitHub();
+    openGitHubIssue();
 });
 
-// Generate formatted fish data (for internal use)
-function generateFishData() {
+// Open prefilled GitHub Issue
+function openGitHubIssue() {
+    // Validate form first
+    if (!validateForm()) {
+        return;
+    }
+    
     const fishName = document.getElementById('fishName').value.trim();
     const rarity = document.getElementById('rarity').value;
     const location = document.getElementById('location').value.trim();
@@ -51,7 +52,62 @@ function generateFishData() {
     const bestTime = document.getElementById('bestTime').value.trim();
     
     // Format: fishname|rarity|location|value|powerRequired|speed|controlNeeded|notes|bestTime
-    return `${fishName}|${rarity}|${location}|${value}|${powerRequired}|${speed}|${controlNeeded}|${notes}|${bestTime}`;
+    const fishEntry = `${fishName}|${rarity}|${location}|${value}|${powerRequired}|${speed}|${controlNeeded}|${notes}|${bestTime}`;
+    
+    // Create issue body with fish data
+    const issueTitle = encodeURIComponent(`Add Fish: ${fishName}`);
+    const issueBody = encodeURIComponent(`## Add Fish to Database
+
+**Fish Name:** ${fishName}
+**Rarity:** ${rarity}
+**Location:** ${location}
+**Base Value:** ${value}
+**Power Required:** ${powerRequired}
+**Speed:** ${speed}
+**Control Needed:** ${controlNeeded}
+${bestTime ? `**Best Time:** ${bestTime}` : ''}
+${notes ? `**Notes:** ${notes}` : ''}
+
+---
+
+**Formatted Entry:**
+\`\`\`
+${fishEntry}
+\`\`\`
+
+---
+
+*This issue was created automatically from the FischPedia web interface. GitHub Actions will automatically add this fish to the database when you submit this issue.*`);
+    
+    // Create prefilled GitHub Issue URL
+    const issueUrl = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/issues/new?title=${issueTitle}&body=${issueBody}&labels=fish-entry`;
+    
+    // Show info message
+    const previewDiv = document.getElementById('preview');
+    previewDiv.innerHTML = `
+        <div class="alert alert-info">
+            <h3>🚀 Opening GitHub Issue...</h3>
+            <p>You'll be redirected to GitHub to submit this fish entry.</p>
+            <p style="margin-top: 15px;">
+                <strong>What happens next:</strong>
+            </p>
+            <ol style="margin-left: 20px; margin-top: 10px;">
+                <li>GitHub will open with a prefilled issue</li>
+                <li>Review the information (you can edit if needed)</li>
+                <li>Click "Submit new issue" (you'll need to sign in to GitHub)</li>
+                <li>GitHub Actions will automatically add the fish to the database!</li>
+            </ol>
+            <p style="margin-top: 15px;">
+                <a href="${issueUrl}" target="_blank" class="btn btn-primary" style="text-decoration: none; display: inline-block;">
+                    📝 Open GitHub Issue
+                </a>
+            </p>
+        </div>
+    `;
+    previewDiv.style.display = 'block';
+    
+    // Open GitHub Issue in new tab
+    window.open(issueUrl, '_blank');
 }
 
 // Validate form before publishing
@@ -72,174 +128,7 @@ function validateForm() {
 }
 
 // Token management UI removed - will be added back later
-// Token is automatically loaded from localStorage on page load
-
-// Add fish directly to GitHub - edits data/fishdata.json in the repository
-async function addFishToGitHub() {
-    console.log('addFishToGitHub called');
-    console.log('Token exists:', !!githubToken);
-    
-    if (!githubToken) {
-        alert('GitHub token not found. Please configure token access.\n\nTo add a token:\n1. Open browser console (F12)\n2. Run: localStorage.setItem("github_token", "your_token_here")\n3. Refresh the page');
-        console.error('No GitHub token found');
-        return;
-    }
-    
-    // Validate form first
-    if (!validateForm()) {
-        console.error('Form validation failed');
-        return;
-    }
-    
-    console.log('Form validated, proceeding with publish...');
-    
-    const fishName = document.getElementById('fishName').value.trim();
-    const rarity = document.getElementById('rarity').value;
-    const location = document.getElementById('location').value.trim();
-    const value = document.getElementById('value').value;
-    const powerRequired = document.getElementById('powerRequired').value;
-    const speed = document.getElementById('speed').value;
-    const controlNeeded = document.getElementById('controlNeeded').value;
-    const notes = document.getElementById('notes').value.trim();
-    const bestTime = document.getElementById('bestTime').value.trim();
-    
-    // Format the new fish entry using the helper function
-    const newEntry = generateFishData();
-    
-    // Show loading state
-    const publishBtn = document.getElementById('publishBtn');
-    const originalText = publishBtn.textContent;
-    publishBtn.disabled = true;
-    publishBtn.textContent = '⏳ Publishing...';
-    
-    try {
-        console.log('Fetching current file from GitHub...');
-        // Get current file content from data/fishdata.json
-        const fileResponse = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/contents/data/fishdata.json`, {
-            headers: {
-                'Authorization': `token ${githubToken}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-        
-        console.log('File response status:', fileResponse.status);
-        
-        if (!fileResponse.ok) {
-            const errorData = await fileResponse.json();
-            console.error('File fetch error:', errorData);
-            throw new Error(`Failed to get file: ${fileResponse.statusText} - ${errorData.message || ''}`);
-        }
-        
-        const fileData = await fileResponse.json();
-        const currentContent = atob(fileData.content.replace(/\n/g, ''));
-        
-        // Check if fish already exists
-        if (currentContent.includes(`${fishName}|`)) {
-            if (!confirm(`Fish "${fishName}" already exists. Do you want to replace it?`)) {
-                return;
-            }
-            // Remove old entry
-            const lines = currentContent.split('\n');
-            const filteredLines = lines.filter(line => !line.trim().startsWith(`${fishName}|`));
-            var updatedContent = filteredLines.join('\n').trim();
-        } else {
-            var updatedContent = currentContent.trim();
-        }
-        
-        // Add new entry
-        if (updatedContent && !updatedContent.endsWith('\n')) {
-            updatedContent += '\n';
-        }
-        updatedContent += newEntry + '\n';
-        
-        // Encode content
-        const encodedContent = btoa(updatedContent);
-        
-        // Update file
-        const updateResponse = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/contents/data/fishdata.json`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${githubToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: `Add fish: ${fishName}`,
-                content: encodedContent,
-                sha: fileData.sha
-            })
-        });
-        
-        if (updateResponse.ok) {
-            const result = await updateResponse.json();
-            // Show success message
-            const previewDiv = document.getElementById('preview');
-            previewDiv.innerHTML = `
-                <div class="alert alert-success">
-                    <h3>✅ Successfully Published to GitHub!</h3>
-                    <p><strong>Fish:</strong> ${fishName}</p>
-                    <p><strong>File Updated:</strong> <code>data/fishdata.json</code></p>
-                    <p><strong>Commit:</strong> ${result.commit.sha.substring(0, 7)}</p>
-                    <p>Your fish has been directly added to the repository's main branch!</p>
-                    <p style="margin-top: 15px;">
-                        <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/commit/${result.commit.sha}" target="_blank" class="github-link">
-                            View Commit on GitHub
-                        </a>
-                        <a href="https://github.com/${GITHUB_OWNER}/${GITHUB_REPO_NAME}/blob/main/data/fishdata.json" target="_blank" class="github-link" style="margin-left: 10px;">
-                            View Updated File
-                        </a>
-                    </p>
-                </div>
-            `;
-            previewDiv.style.display = 'block';
-            
-            // Reset button
-            publishBtn.disabled = false;
-            publishBtn.textContent = originalText;
-            
-            // Clear form
-            clearForm();
-            
-            // Reload database if on view tab
-            setTimeout(() => {
-                if (document.getElementById('view-tab').classList.contains('active')) {
-                    loadFishDatabase();
-                }
-            }, 1000);
-        } else {
-            const error = await updateResponse.json();
-            console.error('Update error response:', error);
-            throw new Error(error.message || 'Failed to update file');
-        }
-    } catch (error) {
-        // Reset button on error
-        publishBtn.disabled = false;
-        publishBtn.textContent = originalText;
-        
-        console.error('Full error details:', error);
-        const errorMessage = error.message || 'Unknown error';
-        
-        // Show error in preview box
-        const previewDiv = document.getElementById('preview');
-        previewDiv.innerHTML = `
-            <div class="alert alert-danger">
-                <h3>❌ Error Publishing to GitHub</h3>
-                <p><strong>Error:</strong> ${errorMessage}</p>
-                <p style="margin-top: 10px;">Possible causes:</p>
-                <ul style="margin-left: 20px; margin-top: 5px;">
-                    <li>Token doesn't have 'repo' permissions</li>
-                    <li>Repository name is incorrect</li>
-                    <li>File path doesn't exist</li>
-                    <li>Network error</li>
-                </ul>
-                <p style="margin-top: 15px;">Check the browser console (F12) for more details.</p>
-            </div>
-        `;
-        previewDiv.style.display = 'block';
-        
-        alert(`❌ Error publishing to GitHub:\n${errorMessage}\n\nCheck the browser console (F12) for details.\n\nMake sure your token has 'repo' permissions and the repository exists.`);
-    }
-}
+// GitHub API code removed - now using network share approach
 
 // Clear form
 function clearForm() {
@@ -378,60 +267,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (urlParams.get('tab') === 'view') {
         switchTab('view');
     }
-    
-    // Check token status
-    console.log('Page loaded. Token exists:', !!githubToken);
-    if (!githubToken) {
-        console.warn('No GitHub token found. Publishing will not work.');
-    }
-    
-    // Update auto-submit info
-    updateAutoSubmitInfo();
-    
-    // Add helpful message if no token
-    if (!githubToken) {
-        const publishBtn = document.getElementById('publishBtn');
-        if (publishBtn) {
-            publishBtn.title = 'GitHub token required - Open browser console (F12) and run: localStorage.setItem("github_token", "your_token")';
-        }
-    }
 });
 
-// Update auto-submit info display
-function updateAutoSubmitInfo() {
-    const infoDiv = document.getElementById('autoSubmitInfo');
-    if (infoDiv) {
-        if (githubToken) {
-            infoDiv.innerHTML = '<p><strong>✅ Publish Enabled!</strong> Click "🚀 Publish to GitHub" above to automatically add the fish to the database.</p>';
-        } else {
-            infoDiv.innerHTML = '<p><strong>💡 Publish:</strong> Token management UI will be added back later. For now, token must be configured manually.</p>';
-        }
-    }
-    
-    // Update token status display
-    const tokenStatusDiv = document.getElementById('tokenStatus');
-    if (tokenStatusDiv) {
-        if (githubToken) {
-            tokenStatusDiv.innerHTML = '<div class="alert alert-success"><strong>✅ Token Configured</strong> - Ready to publish!</div>';
-        } else {
-            tokenStatusDiv.innerHTML = '<div class="alert alert-danger"><strong>⚠️ No Token Found</strong><br>To add a token, open browser console (F12) and run:<br><code style="background: #f4f4f4; padding: 2px 6px; border-radius: 3px;">localStorage.setItem("github_token", "your_token_here")</code><br>Then refresh the page.</div>';
-        }
-    }
-    
-    // Update publish button state
-    const publishBtn = document.getElementById('publishBtn');
-    if (publishBtn) {
-        if (githubToken) {
-            publishBtn.disabled = false;
-            publishBtn.style.opacity = '1';
-            publishBtn.title = 'Publish fish to GitHub';
-        } else {
-            publishBtn.disabled = false; // Allow click to show error
-            publishBtn.style.opacity = '1';
-            publishBtn.title = 'GitHub token required - Click to see instructions';
-        }
-    }
-}
-
-// Token management UI removed - will be added back later
 

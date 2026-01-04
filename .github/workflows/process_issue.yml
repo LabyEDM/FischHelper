@@ -1,0 +1,119 @@
+name: Process Fish Entry Issue
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  process-fish-entry:
+    # Only run if issue has the "fish-entry" label or title starts with "Add Fish:"
+    if: |
+      contains(github.event.issue.labels.*.name, 'fish-entry') ||
+      startsWith(github.event.issue.title, 'Add Fish:')
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Extract fish data from issue
+        id: extract-data
+        run: |
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          
+          # Extract formatted entry from code block (look for ``` or `)
+          FISH_ENTRY=$(echo "$ISSUE_BODY" | grep -A 1 "Formatted Entry:" | tail -n 1 | sed 's/```//g' | sed 's/`//g' | xargs)
+          
+          # If not found, try to extract from the issue body directly
+          if [ -z "$FISH_ENTRY" ] || [ "$FISH_ENTRY" == "" ]; then
+            # Try to find pipe-delimited line in the body
+            FISH_ENTRY=$(echo "$ISSUE_BODY" | grep -E "^[^|]+\|[^|]+\|" | head -n 1 | xargs)
+          fi
+          
+          if [ -z "$FISH_ENTRY" ] || [ "$FISH_ENTRY" == "" ]; then
+            echo "❌ Could not extract fish entry from issue body"
+            echo "Issue body preview:"
+            echo "$ISSUE_BODY" | head -n 20
+            exit 1
+          fi
+          
+          # Extract fish name (first field before |)
+          FISH_NAME=$(echo "$FISH_ENTRY" | cut -d'|' -f1 | xargs)
+          
+          if [ -z "$FISH_NAME" ]; then
+            echo "❌ Could not extract fish name from entry: $FISH_ENTRY"
+            exit 1
+          fi
+          
+          echo "✅ Extracted fish entry: $FISH_ENTRY"
+          echo "✅ Fish name: $FISH_NAME"
+          
+          echo "fish_entry=${FISH_ENTRY}" >> $GITHUB_OUTPUT
+          echo "fish_name=${FISH_NAME}" >> $GITHUB_OUTPUT
+          echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+      
+      - name: Read existing fish data
+        id: existing-data
+        run: |
+          if [ -f "data/fishdata.json" ]; then
+            CONTENT=$(cat data/fishdata.json)
+            echo "content<<EOF" >> $GITHUB_OUTPUT
+            echo "$CONTENT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "content=" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Update fish data
+        run: |
+          FISH_NAME="${{ steps.extract-data.outputs.fish_name }}"
+          NEW_ENTRY="${{ steps.extract-data.outputs.fish_entry }}"
+          EXISTING="${{ steps.existing-data.outputs.content }}"
+          
+          # Remove old entry if exists
+          if echo "$EXISTING" | grep -q "^${FISH_NAME}|"; then
+            UPDATED=$(echo "$EXISTING" | grep -v "^${FISH_NAME}|")
+            echo "Removed existing entry for ${FISH_NAME}"
+          else
+            UPDATED="$EXISTING"
+          fi
+          
+          # Add new entry
+          if [ -n "$UPDATED" ] && [ "${UPDATED: -1}" != "\n" ]; then
+            UPDATED="${UPDATED}\n"
+          fi
+          UPDATED="${UPDATED}${NEW_ENTRY}\n"
+          
+          echo -e "$UPDATED" > data/fishdata.json
+          echo "Added/updated entry for ${FISH_NAME}"
+      
+      - name: Commit and push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add data/fishdata.json
+          git commit -m "Add fish: ${{ steps.extract-data.outputs.fish_name }} (from issue #${{ steps.extract-data.outputs.issue_number }})"
+          git push
+      
+      - name: Comment on issue
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ Fish entry processed successfully! The fish has been added to the database.\n\n' +
+                    'View the commit: https://github.com/${{ github.repository }}/commit/${{ github.sha }}'
+            })
+            
+            # Close the issue
+            github.rest.issues.update({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed'
+            })
+

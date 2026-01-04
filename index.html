@@ -389,35 +389,22 @@
                     </div>
                     
                     <div class="btn-group">
-                        <button type="submit" class="btn btn-primary" id="publishBtn">🚀 Publish to GitHub</button>
+                        <button type="submit" class="btn btn-primary" id="publishBtn">🚀 Submit to GitHub</button>
                         <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
                     </div>
-                    <div id="tokenStatus" style="margin-top: 10px; padding: 10px; border-radius: 5px; font-size: 0.9em;"></div>
                     <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 0.9em;">
-                        <strong>💡 Note:</strong> This will directly edit <code>data/fishdata.json</code> in the repository and commit to the main branch.
+                        <strong>💡 How it works:</strong><br>
+                        1. Fill out the form above<br>
+                        2. Click "🚀 Submit to GitHub" - this opens a prefilled GitHub Issue<br>
+                        3. Sign in to GitHub (if not already signed in)<br>
+                        4. Review and click "Submit new issue"<br>
+                        5. GitHub Actions automatically adds the fish to the database!<br>
+                        <small style="color: #666;">No tokens needed - you authenticate directly with GitHub!</small>
                     </div>
                 </form>
                 
                 <div id="preview" class="preview-box" style="display: none;">
-                    <h3>📋 Generated Data Format</h3>
-                    <div class="preview-code" id="previewCode"></div>
-                    <div class="github-section">
-                        <h3>🚀 Submit to GitHub</h3>
-                        <div id="autoSubmitInfo">
-                            <p><strong>🚀 Publish Available!</strong> Click "Publish to GitHub" above to automatically add the fish to the database.</p>
-                        </div>
-                        <p style="margin-top: 15px;">Or manually submit by following these steps:</p>
-                        <ol style="margin-left: 20px; margin-top: 10px;">
-                            <li>Go to the <a href="https://github.com/LabyEDM/fischhelper/tree/main/data" target="_blank">data folder</a> on GitHub</li>
-                            <li>Click on <code>fishdata.json</code></li>
-                            <li>Click the pencil icon (✏️) to edit</li>
-                            <li>Add your new fish entry at the end of the file</li>
-                            <li>Click "Propose changes" to create a Pull Request</li>
-                        </ol>
-                        <a href="https://github.com/LabyEDM/fischhelper/edit/main/data/fishdata.json" target="_blank" class="github-link">
-                            ✏️ Edit on GitHub
-                        </a>
-                    </div>
+                    <!-- Preview content will be shown here when form is submitted -->
                 </div>
             </div>
             
@@ -439,18 +426,30 @@
                     <p>This tool helps you contribute to the FischPedia community database hosted on GitHub.</p>
                     
                     <div class="alert alert-success" style="margin-top: 20px;">
-                        <strong>✅ GitHub Integration Active</strong>
-                        <p style="margin-top: 10px;">Auto-submit functionality is enabled. You can add fish directly to GitHub using the "Add to GitHub" button in the "Add Fish" tab.</p>
+                        <strong>✅ GitHub Issues Integration</strong>
+                        <p style="margin-top: 10px;">Submit fish entries via GitHub Issues. You authenticate directly with GitHub - no tokens needed! GitHub Actions automatically processes your submissions.</p>
                     </div>
                     
-                    <h3 style="margin-top: 20px;">How to Contribute:</h3>
+                    <h3 style="margin-top: 20px;">How It Works:</h3>
                     <ol style="margin-left: 20px; margin-top: 10px;">
-                        <li><strong>Add a Fish:</strong> Use the "Add Fish" tab to fill out the form</li>
-                        <li><strong>Generate Format:</strong> Click "Generate Data Format" to get the formatted entry</li>
-                        <li><strong>Submit via GitHub:</strong> Click "Edit on GitHub" to add your entry</li>
-                        <li><strong>Create Pull Request:</strong> GitHub will guide you through creating a PR</li>
-                        <li><strong>Review & Merge:</strong> Community will review and merge your contribution</li>
+                        <li><strong>Fill Form:</strong> Use the "Add Fish" tab to fill out the fish information</li>
+                        <li><strong>Submit:</strong> Click "🚀 Submit to GitHub" button</li>
+                        <li><strong>GitHub Opens:</strong> A prefilled GitHub Issue opens in a new tab</li>
+                        <li><strong>Authenticate:</strong> Sign in to GitHub (if not already signed in)</li>
+                        <li><strong>Review & Submit:</strong> Review the prefilled information and click "Submit new issue"</li>
+                        <li><strong>Auto-Process:</strong> GitHub Actions automatically adds the fish to the database!</li>
+                        <li><strong>Done!</strong> Your fish is now in the database</li>
                     </ol>
+                    
+                    <div class="alert alert-info" style="margin-top: 20px;">
+                        <strong>🔒 Security Benefits:</strong>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>✅ You authenticate directly with GitHub (no tokens needed)</li>
+                            <li>✅ All submissions are tracked via GitHub Issues</li>
+                            <li>✅ GitHub Actions handles the database updates automatically</li>
+                            <li>✅ Full audit trail of all submissions</li>
+                        </ul>
+                    </div>
                     
                     <h3 style="margin-top: 20px;">Repository Links:</h3>
                     <div style="margin-top: 10px;">
@@ -461,7 +460,10 @@
                             📄 Data Folder
                         </a>
                         <a href="https://github.com/LabyEDM/FischHelper/issues" target="_blank" class="github-link" style="margin-left: 10px;">
-                            🐛 Report Issues
+                            🐛 View Issues
+                        </a>
+                        <a href="https://github.com/LabyEDM/FischHelper/actions" target="_blank" class="github-link" style="margin-left: 10px;">
+                            ⚙️ View Actions
                         </a>
                     </div>
                     
