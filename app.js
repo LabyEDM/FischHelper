@@ -38,7 +38,7 @@ const categoryForms = {
             { id: 'preferredBait', label: 'Preferred Bait', type: 'text' },
             { id: 'mutationAttributes', label: 'Mutation Attributes', type: 'text' },
             { id: 'weatherCondition', label: 'Weather Condition', type: 'text' },
-            { id: 'time', label: 'Time', type: 'text' },
+            { id: 'time', label: 'Time', type: 'time' },
             { id: 'season', label: 'Season', type: 'text' },
             { id: 'radarLocation', label: 'Radar Location', type: 'text' }
         ]
@@ -70,16 +70,23 @@ const categoryForms = {
     mutations: {
         fields: [
             { id: 'name', label: 'Mutation Name *', type: 'text', required: true },
-            { id: 'attributes', label: 'Attributes with Multiplier', type: 'text', multi: true },
-            { id: 'mutation', label: 'Mutation with Multiplier', type: 'text', multi: true },
-            { id: 'mutationPriority', label: 'Mutation Priority', type: 'text' }
+            { id: 'mutationMultiplier', label: 'Mutation Multiplier (e.g., 1.5x, 2x, 0.75x) *', type: 'text', required: true, placeholder: 'Format: 1.5x or 2x' },
+            { id: 'mutationPriority', label: 'Mutation Priority', type: 'text' },
+            { id: 'notes', label: 'Notes', type: 'textarea' }
+        ]
+    },
+    attributes: {
+        fields: [
+            { id: 'name', label: 'Attribute Name *', type: 'text', required: true },
+            { id: 'multiplier', label: 'Multiplier (e.g., 1.5x, 2x, 0.75x) *', type: 'text', required: true, placeholder: 'Format: 1.5x or 2x' },
+            { id: 'description', label: 'Description', type: 'textarea' }
         ]
     },
     potions: {
         fields: [
             { id: 'name', label: 'Potion Name *', type: 'text', required: true },
             { id: 'effect', label: 'Effect', type: 'textarea' },
-            { id: 'duration', label: 'Duration', type: 'text' },
+            { id: 'duration', label: 'Duration (HH:MM)', type: 'time' },
             { id: 'notes', label: 'Notes', type: 'textarea' }
         ]
     },
@@ -120,8 +127,8 @@ const categoryForms = {
         fields: [
             { id: 'name', label: 'Event Name *', type: 'text', required: true },
             { id: 'description', label: 'Description', type: 'textarea' },
-            { id: 'startDate', label: 'Start Date', type: 'text' },
-            { id: 'endDate', label: 'End Date', type: 'text' },
+            { id: 'startDate', label: 'Start Date', type: 'date' },
+            { id: 'endDate', label: 'End Date', type: 'date' },
             { id: 'buffs', label: 'Buffs', type: 'textarea' }
         ]
     },
@@ -196,9 +203,11 @@ function createField(field) {
         });
         input += `</select>`;
     } else if (field.type === 'textarea') {
-        input = `<textarea id="${field.id}" ${required} placeholder="${field.label}"></textarea>`;
+        const placeholder = field.placeholder || field.label;
+        input = `<textarea id="${field.id}" ${required} placeholder="${placeholder}"></textarea>`;
     } else {
-        input = `<input type="${field.type}" id="${field.id}" ${required} placeholder="${field.label}">`;
+        const placeholder = field.placeholder || field.label;
+        input = `<input type="${field.type}" id="${field.id}" ${required} placeholder="${placeholder}">`;
     }
     
     return `
@@ -314,6 +323,22 @@ function openGitHubIssue(action = 'add') {
         return;
     }
     
+    // Validate multiplier format if present
+    if (formData.mutationMultiplier) {
+        const multiplierPattern = /^\d+(\.\d+)?x$/i;
+        if (!multiplierPattern.test(formData.mutationMultiplier)) {
+            alert('Mutation Multiplier must be in format: 1.5x, 2x, 0.75x, etc.');
+            return;
+        }
+    }
+    if (formData.multiplier) {
+        const multiplierPattern = /^\d+(\.\d+)?x$/i;
+        if (!multiplierPattern.test(formData.multiplier)) {
+            alert('Multiplier must be in format: 1.5x, 2x, 0.75x, etc.');
+            return;
+        }
+    }
+    
     // Create formatted entry (JSON format)
     const entryData = {
         category: category,
@@ -392,6 +417,7 @@ function parseDatabase(text) {
         rods: [],
         baits: [],
         mutations: [],
+        attributes: [],
         potions: [],
         utility: [],
         weather: [],

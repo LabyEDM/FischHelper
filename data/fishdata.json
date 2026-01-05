@@ -169,5 +169,6 @@
   "locations": [],
   "admin-events": [],
   "totem-events": [],
-  "mini-events": []
+  "mini-events": [],
+  "attributes": []
 }
