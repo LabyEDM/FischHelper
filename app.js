@@ -38,7 +38,7 @@ const categoryForms = {
             { id: 'preferredBait', label: 'Preferred Bait', type: 'text' },
             { id: 'mutationAttributes', label: 'Mutation Attributes', type: 'text' },
             { id: 'weatherCondition', label: 'Weather Condition', type: 'text' },
-            { id: 'time', label: 'Time', type: 'time' },
+            { id: 'time', label: 'Time (minutes)', type: 'number', min: 0, max: 59 },
             { id: 'season', label: 'Season', type: 'text' },
             { id: 'radarLocation', label: 'Radar Location', type: 'text' }
         ]
@@ -86,7 +86,7 @@ const categoryForms = {
         fields: [
             { id: 'name', label: 'Potion Name *', type: 'text', required: true },
             { id: 'effect', label: 'Effect', type: 'textarea' },
-            { id: 'duration', label: 'Duration (HH:MM)', type: 'time' },
+            { id: 'duration', label: 'Duration (minutes)', type: 'number', min: 0, max: 59 },
             { id: 'notes', label: 'Notes', type: 'textarea' }
         ]
     },
@@ -207,7 +207,9 @@ function createField(field) {
         input = `<textarea id="${field.id}" ${required} placeholder="${placeholder}"></textarea>`;
     } else {
         const placeholder = field.placeholder || field.label;
-        input = `<input type="${field.type}" id="${field.id}" ${required} placeholder="${placeholder}">`;
+        const min = field.min !== undefined ? `min="${field.min}"` : '';
+        const max = field.max !== undefined ? `max="${field.max}"` : '';
+        input = `<input type="${field.type}" id="${field.id}" ${required} ${min} ${max} placeholder="${placeholder}">`;
     }
     
     return `
