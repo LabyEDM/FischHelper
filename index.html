@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FischPedia - Community Fish Database Manager</title>
+    <title>FischPedia - Complete Database Manager</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -50,20 +50,22 @@
         
         .tabs {
             display: flex;
-            gap: 10px;
+            gap: 5px;
             margin-bottom: 30px;
             border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
         }
         
         .tab {
-            padding: 15px 30px;
+            padding: 12px 20px;
             cursor: pointer;
             background: none;
             border: none;
-            font-size: 1.1em;
+            font-size: 0.95em;
             color: #666;
             transition: all 0.3s;
             border-bottom: 3px solid transparent;
+            white-space: nowrap;
         }
         
         .tab.active {
@@ -102,6 +104,7 @@
             border-radius: 8px;
             font-size: 1em;
             transition: border-color 0.3s;
+            font-family: inherit;
         }
         
         input:focus, select:focus, textarea:focus {
@@ -111,12 +114,12 @@
         
         textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 80px;
         }
         
         .form-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
         }
         
@@ -155,90 +158,21 @@
             background: #e0e0e0;
         }
         
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
         .btn-group {
             display: flex;
             gap: 15px;
             margin-top: 30px;
+            flex-wrap: wrap;
         }
-        
-        .preview-box {
-            background: #f8f9fa;
-            border: 2px dashed #667eea;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
-        .preview-box h3 {
-            margin-bottom: 15px;
-            color: #667eea;
-        }
-        
-        .preview-code {
-            background: #2d2d2d;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            overflow-x: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        
-        .fish-list {
-            display: grid;
-            gap: 15px;
-        }
-        
-        .fish-card {
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            transition: all 0.3s;
-        }
-        
-        .fish-card:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        
-        .fish-card h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        
-        .fish-card .info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .fish-card .info-item {
-            font-size: 0.9em;
-        }
-        
-        .fish-card .info-label {
-            font-weight: 600;
-            color: #666;
-        }
-        
-        .rarity-badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-        
-        .rarity-common { background: #e0e0e0; color: #333; }
-        .rarity-uncommon { background: #4caf50; color: white; }
-        .rarity-rare { background: #2196f3; color: white; }
-        .rarity-epic { background: #9c27b0; color: white; }
-        .rarity-legendary { background: #ff9800; color: white; }
         
         .alert {
             padding: 15px;
@@ -264,41 +198,135 @@
             border: 1px solid #f5c6cb;
         }
         
-        small {
-            font-size: 0.9em;
+        .data-list {
+            display: grid;
+            gap: 15px;
         }
         
-        code {
-            background: #f4f4f4;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .github-section {
+        .data-card {
             background: #f8f9fa;
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
             padding: 20px;
-            margin-top: 30px;
+            transition: all 0.3s;
+            position: relative;
         }
         
-        .github-section h3 {
-            margin-bottom: 15px;
-            color: #333;
+        .data-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         
-        .github-link {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #24292e;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
+        .data-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .data-card .info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
             margin-top: 10px;
         }
         
-        .github-link:hover {
-            background: #2f363d;
+        .data-card .info-item {
+            font-size: 0.9em;
+        }
+        
+        .data-card .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .edit-btn {
+            padding: 5px 15px;
+            font-size: 0.85em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .edit-btn:hover {
+            background: #5568d3;
+        }
+        
+        .search-box {
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            max-width: 500px;
+        }
+        
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-left: 10px;
+            background: #667eea;
+            color: white;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .multi-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+        
+        .multi-input-group input {
+            flex: 1;
+        }
+        
+        .multi-input-group button {
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .multi-input-group button:hover {
+            background: #5568d3;
+        }
+        
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .tag {
+            background: #e0e0e0;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tag-remove {
+            cursor: pointer;
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .tag-remove:hover {
+            color: #c82333;
         }
     </style>
 </head>
@@ -306,171 +334,171 @@
     <div class="container">
         <header>
             <h1>🐟 FischPedia</h1>
-            <p>Community-Driven Fish Database Manager</p>
+            <p>Complete Database Manager - All Categories</p>
         </header>
         
         <div class="content">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('add')">Add Fish</button>
-                <button class="tab" onclick="switchTab('view')">View Database</button>
-                <button class="tab" onclick="switchTab('github')">GitHub Integration</button>
+                <button class="tab active" onclick="switchTab('add')">➕ Add Entry</button>
+                <button class="tab" onclick="switchTab('view')">👀 View Database</button>
+                <button class="tab" onclick="switchTab('edit')">✏️ Edit Entry</button>
+                <button class="tab" onclick="switchTab('github')">🔗 GitHub</button>
             </div>
             
-            <!-- Add Fish Tab -->
+            <!-- Add Entry Tab -->
             <div id="add-tab" class="tab-content active">
                 <div class="alert alert-info">
-                    <strong>📝 Instructions:</strong> Fill out the form below to add a new fish to the database. 
-                    The formatted data will be generated automatically for GitHub submission.
+                    <strong>📝 Instructions:</strong> Select a category below and fill out the form to add a new entry. 
+                    Click "🚀 Submit to GitHub" to create a prefilled GitHub Issue.
                 </div>
                 
-                <form id="fishForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fishName">Fish Name *</label>
-                            <input type="text" id="fishName" required placeholder="e.g., Tuna">
-                        </div>
-                        <div class="form-group">
-                            <label for="rarity">Rarity *</label>
-                            <select id="rarity" required>
-                                <option value="">Select Rarity</option>
-                                <option value="Common">Common</option>
-                                <option value="Uncommon">Uncommon</option>
-                                <option value="Rare">Rare</option>
-                                <option value="Epic">Epic</option>
-                                <option value="Legendary">Legendary</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="location">Location *</label>
-                            <input type="text" id="location" required placeholder="e.g., Ocean, Freshwater">
-                        </div>
-                        <div class="form-group">
-                            <label for="value">Base Value *</label>
-                            <input type="number" id="value" required placeholder="e.g., 50" min="0">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="powerRequired">Power Required *</label>
-                            <input type="number" id="powerRequired" required placeholder="e.g., 25" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="speed">Speed *</label>
-                            <select id="speed" required>
-                                <option value="">Select Speed</option>
-                                <option value="Very Slow">Very Slow</option>
-                                <option value="Slow">Slow</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Fast">Fast</option>
-                                <option value="Very Fast">Very Fast</option>
-                                <option value="Extreme">Extreme</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="controlNeeded">Control Needed *</label>
-                            <input type="number" id="controlNeeded" required placeholder="e.g., 15" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="bestTime">Best Time (Optional)</label>
-                            <input type="text" id="bestTime" placeholder="e.g., Night, Day, Dawn">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="notes">Notes (Optional)</label>
-                        <textarea id="notes" placeholder="Additional information about the fish..."></textarea>
+                <div class="form-group">
+                    <label for="categorySelect">Category *</label>
+                    <select id="categorySelect" onchange="loadCategoryForm()" required>
+                        <option value="">Select Category</option>
+                        <option value="fish">🐟 Fish</option>
+                        <option value="rods">🎣 Rods</option>
+                        <option value="baits">🪱 Baits</option>
+                        <option value="mutations">🧬 Mutations</option>
+                        <option value="potions">🧪 Potions</option>
+                        <option value="utility">🛠️ Utility/Items</option>
+                        <option value="weather">🌤️ Weather</option>
+                        <option value="season">🍂 Seasons</option>
+                        <option value="enchanting">✨ Enchanting</option>
+                        <option value="events">🎉 Global Events</option>
+                        <option value="locations">📍 Locations</option>
+                        <option value="admin-events">👑 Admin Event Buffs</option>
+                        <option value="totem-events">🔥 Totem Events</option>
+                        <option value="mini-events">⭐ Mini Events</option>
+                    </select>
+                </div>
+                
+                <form id="entryForm">
+                    <div id="formFields">
+                        <p style="color: #666; text-align: center; padding: 40px;">
+                            Please select a category above to load the form.
+                        </p>
                     </div>
                     
                     <div class="btn-group">
-                        <button type="submit" class="btn btn-primary" id="publishBtn">🚀 Submit to GitHub</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn" style="display: none;">🚀 Submit to GitHub</button>
                         <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
                     </div>
-                    <div style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 5px; font-size: 0.9em;">
-                        <strong>💡 How it works:</strong><br>
-                        1. Fill out the form above<br>
-                        2. Click "🚀 Submit to GitHub" - this opens a prefilled GitHub Issue<br>
-                        3. Sign in to GitHub (if not already signed in)<br>
-                        4. Review and click "Submit new issue"<br>
-                        5. GitHub Actions automatically adds the fish to the database!<br>
-                        <small style="color: #666;">No tokens needed - you authenticate directly with GitHub!</small>
-                    </div>
                 </form>
-                
-                <div id="preview" class="preview-box" style="display: none;">
-                    <!-- Preview content will be shown here when form is submitted -->
-                </div>
             </div>
             
             <!-- View Database Tab -->
             <div id="view-tab" class="tab-content">
                 <div class="alert alert-info">
-                    <strong>📚 Database:</strong> View all fish currently in the database. 
-                    Data is loaded from GitHub automatically.
+                    <strong>📚 Database:</strong> View all entries in the database. Data is loaded from GitHub automatically.
                 </div>
-                <div id="fishList" class="fish-list">
-                    <p>Loading fish database...</p>
+                
+                <div class="form-group">
+                    <label for="viewCategorySelect">Filter by Category</label>
+                    <select id="viewCategorySelect" onchange="loadDatabase()">
+                        <option value="">All Categories</option>
+                        <option value="fish">🐟 Fish</option>
+                        <option value="rods">🎣 Rods</option>
+                        <option value="baits">🪱 Baits</option>
+                        <option value="mutations">🧬 Mutations</option>
+                        <option value="potions">🧪 Potions</option>
+                        <option value="utility">🛠️ Utility/Items</option>
+                        <option value="weather">🌤️ Weather</option>
+                        <option value="season">🍂 Seasons</option>
+                        <option value="enchanting">✨ Enchanting</option>
+                        <option value="events">🎉 Global Events</option>
+                        <option value="locations">📍 Locations</option>
+                        <option value="admin-events">👑 Admin Event Buffs</option>
+                        <option value="totem-events">🔥 Totem Events</option>
+                        <option value="mini-events">⭐ Mini Events</option>
+                    </select>
                 </div>
+                
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search entries..." onkeyup="filterDatabase()">
+                </div>
+                
+                <div id="dataList" class="data-list">
+                    <p>Loading database...</p>
+                </div>
+            </div>
+            
+            <!-- Edit Entry Tab -->
+            <div id="edit-tab" class="tab-content">
+                <div class="alert alert-info">
+                    <strong>✏️ Edit Entry:</strong> Search for an entry to edit, or select from the database view.
+                </div>
+                
+                <div class="form-group">
+                    <label for="editCategorySelect">Category *</label>
+                    <select id="editCategorySelect" onchange="loadEditForm()" required>
+                        <option value="">Select Category</option>
+                        <option value="fish">🐟 Fish</option>
+                        <option value="rods">🎣 Rods</option>
+                        <option value="baits">🪱 Baits</option>
+                        <option value="mutations">🧬 Mutations</option>
+                        <option value="potions">🧪 Potions</option>
+                        <option value="utility">🛠️ Utility/Items</option>
+                        <option value="weather">🌤️ Weather</option>
+                        <option value="season">🍂 Seasons</option>
+                        <option value="enchanting">✨ Enchanting</option>
+                        <option value="events">🎉 Global Events</option>
+                        <option value="locations">📍 Locations</option>
+                        <option value="admin-events">👑 Admin Event Buffs</option>
+                        <option value="totem-events">🔥 Totem Events</option>
+                        <option value="mini-events">⭐ Mini Events</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editEntrySelect">Entry Name *</label>
+                    <select id="editEntrySelect" onchange="loadEntryForEdit()" required>
+                        <option value="">Select Entry to Edit</option>
+                    </select>
+                </div>
+                
+                <form id="editForm">
+                    <div id="editFormFields">
+                        <p style="color: #666; text-align: center; padding: 40px;">
+                            Please select a category and entry above to load the edit form.
+                        </p>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary" id="editSubmitBtn" style="display: none;">🚀 Submit Update to GitHub</button>
+                        <button type="button" class="btn btn-secondary" onclick="clearEditForm()">Clear</button>
+                    </div>
+                </form>
             </div>
             
             <!-- GitHub Integration Tab -->
             <div id="github-tab" class="tab-content">
-                <div class="github-section">
-                    <h3>🔗 GitHub Integration</h3>
-                    <p>This tool helps you contribute to the FischPedia community database hosted on GitHub.</p>
-                    
-                    <div class="alert alert-success" style="margin-top: 20px;">
-                        <strong>✅ GitHub Issues Integration</strong>
-                        <p style="margin-top: 10px;">Submit fish entries via GitHub Issues. You authenticate directly with GitHub - no tokens needed! GitHub Actions automatically processes your submissions.</p>
-                    </div>
-                    
-                    <h3 style="margin-top: 20px;">How It Works:</h3>
-                    <ol style="margin-left: 20px; margin-top: 10px;">
-                        <li><strong>Fill Form:</strong> Use the "Add Fish" tab to fill out the fish information</li>
-                        <li><strong>Submit:</strong> Click "🚀 Submit to GitHub" button</li>
-                        <li><strong>GitHub Opens:</strong> A prefilled GitHub Issue opens in a new tab</li>
-                        <li><strong>Authenticate:</strong> Sign in to GitHub (if not already signed in)</li>
-                        <li><strong>Review & Submit:</strong> Review the prefilled information and click "Submit new issue"</li>
-                        <li><strong>Auto-Process:</strong> GitHub Actions automatically adds the fish to the database!</li>
-                        <li><strong>Done!</strong> Your fish is now in the database</li>
-                    </ol>
-                    
-                    <div class="alert alert-info" style="margin-top: 20px;">
-                        <strong>🔒 Security Benefits:</strong>
-                        <ul style="margin-left: 20px; margin-top: 10px;">
-                            <li>✅ You authenticate directly with GitHub (no tokens needed)</li>
-                            <li>✅ All submissions are tracked via GitHub Issues</li>
-                            <li>✅ GitHub Actions handles the database updates automatically</li>
-                            <li>✅ Full audit trail of all submissions</li>
-                        </ul>
-                    </div>
-                    
-                    <h3 style="margin-top: 20px;">Repository Links:</h3>
-                    <div style="margin-top: 10px;">
-                        <a href="https://github.com/LabyEDM/FischHelper" target="_blank" class="github-link">
-                            📦 Main Repository
-                        </a>
-                        <a href="https://github.com/LabyEDM/FischHelper/tree/main/data" target="_blank" class="github-link" style="margin-left: 10px;">
-                            📄 Data Folder
-                        </a>
-                        <a href="https://github.com/LabyEDM/FischHelper/issues" target="_blank" class="github-link" style="margin-left: 10px;">
-                            🐛 View Issues
-                        </a>
-                        <a href="https://github.com/LabyEDM/FischHelper/actions" target="_blank" class="github-link" style="margin-left: 10px;">
-                            ⚙️ View Actions
-                        </a>
-                    </div>
-                    
-                    <h3 style="margin-top: 20px;">Data Format:</h3>
-                    <div class="preview-code" style="margin-top: 10px;">
-fishname|rarity|location|value|powerRequired|speed|controlNeeded|notes|bestTime
-                    </div>
+                <div class="alert alert-success">
+                    <strong>✅ GitHub Issues Integration</strong>
+                    <p style="margin-top: 10px;">Submit entries via GitHub Issues. You authenticate directly with GitHub - no tokens needed! GitHub Actions automatically processes your submissions.</p>
+                </div>
+                
+                <h3 style="margin-top: 20px;">How It Works:</h3>
+                <ol style="margin-left: 20px; margin-top: 10px;">
+                    <li><strong>Fill Form:</strong> Use the "Add Entry" or "Edit Entry" tabs</li>
+                    <li><strong>Submit:</strong> Click "🚀 Submit to GitHub" button</li>
+                    <li><strong>GitHub Opens:</strong> A prefilled GitHub Issue opens in a new tab</li>
+                    <li><strong>Authenticate:</strong> Sign in to GitHub (if not already signed in)</li>
+                    <li><strong>Review & Submit:</strong> Review the prefilled information and click "Submit new issue"</li>
+                    <li><strong>Auto-Process:</strong> GitHub Actions automatically adds/updates the entry in the database!</li>
+                </ol>
+                
+                <h3 style="margin-top: 20px;">Repository Links:</h3>
+                <div style="margin-top: 10px;">
+                    <a href="https://github.com/LabyEDM/FischHelper" target="_blank" class="btn btn-primary" style="text-decoration: none; display: inline-block; margin-right: 10px;">
+                        📦 Main Repository
+                    </a>
+                    <a href="https://github.com/LabyEDM/FischHelper/issues" target="_blank" class="btn btn-primary" style="text-decoration: none; display: inline-block; margin-right: 10px;">
+                        🐛 View Issues
+                    </a>
+                    <a href="https://github.com/LabyEDM/FischHelper/actions" target="_blank" class="btn btn-primary" style="text-decoration: none; display: inline-block;">
+                        ⚙️ View Actions
+                    </a>
                 </div>
             </div>
         </div>
@@ -479,4 +507,3 @@ fishname|rarity|location|value|powerRequired|speed|controlNeeded|notes|bestTime
     <script src="app.js"></script>
 </body>
 </html>
-

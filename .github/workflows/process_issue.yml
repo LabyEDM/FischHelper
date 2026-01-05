@@ -1,4 +1,4 @@
-name: Process Fish Entry Issue
+name: Process Database Entry Issue
 
 on:
   issues:
@@ -9,10 +9,11 @@ permissions:
   issues: write
 
 jobs:
-  process-fish-entry:
-    # Only run if issue title starts with "Add Fish:"
-    # The web interface automatically sets the title to "Add Fish: [fish name]"
-    if: startsWith(github.event.issue.title, 'Add Fish:')
+  process-entry:
+    # Only run if issue title starts with "Add" or "Edit" followed by a category
+    if: |
+      startsWith(github.event.issue.title, 'Add ') || 
+      startsWith(github.event.issue.title, 'Edit ')
     
     runs-on: ubuntu-latest
     
@@ -22,122 +23,291 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Extract fish data from issue
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Extract entry data from issue
         id: extract-data
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          # Write issue body to a file to avoid shell interpretation issues with special characters
+          # Write issue body to a file to avoid shell interpretation issues
           echo "$ISSUE_BODY" > /tmp/issue_body.txt
           
-          # Read from file
-          ISSUE_BODY_CONTENT=$(cat /tmp/issue_body.txt)
+          # Extract JSON from code block
+          JSON_START=$(grep -n "```json" /tmp/issue_body.txt | cut -d: -f1)
+          JSON_END=$(grep -n "```" /tmp/issue_body.txt | tail -n 1 | cut -d: -f1)
           
-          # Extract formatted entry from code block (look for ``` or `)
-          FISH_ENTRY=$(echo "$ISSUE_BODY_CONTENT" | grep -A 1 "Formatted Entry:" | tail -n 1 | sed 's/```//g' | sed 's/`//g' | xargs)
-          
-          # If not found, try to extract from the issue body directly
-          if [ -z "$FISH_ENTRY" ] || [ "$FISH_ENTRY" == "" ]; then
-            # Try to find pipe-delimited line in the body
-            FISH_ENTRY=$(echo "$ISSUE_BODY_CONTENT" | grep -E "^[^|]+\|[^|]+\|" | head -n 1 | xargs)
+          if [ -z "$JSON_START" ] || [ -z "$JSON_END" ] || [ "$JSON_START" == "$JSON_END" ]; then
+            # Try without json tag
+            JSON_START=$(grep -n "^```" /tmp/issue_body.txt | head -n 1 | cut -d: -f1)
+            JSON_END=$(grep -n "^```" /tmp/issue_body.txt | tail -n 1 | cut -d: -f1)
           fi
           
-          if [ -z "$FISH_ENTRY" ] || [ "$FISH_ENTRY" == "" ]; then
-            echo "❌ Could not extract fish entry from issue body"
+          if [ -n "$JSON_START" ] && [ -n "$JSON_END" ] && [ "$JSON_START" != "$JSON_END" ]; then
+            # Extract JSON content
+            sed -n "$((JSON_START+1)),$((JSON_END-1))p" /tmp/issue_body.txt > /tmp/entry.json
+          else
+            echo "❌ Could not find JSON code block in issue body"
             echo "Issue body preview:"
-            echo "$ISSUE_BODY_CONTENT" | head -n 20
+            head -n 30 /tmp/issue_body.txt
             exit 1
           fi
           
-          # Extract fish name (first field before |)
-          FISH_NAME=$(echo "$FISH_ENTRY" | cut -d'|' -f1 | xargs)
-          
-          if [ -z "$FISH_NAME" ]; then
-            echo "❌ Could not extract fish name from entry: $FISH_ENTRY"
+          # Validate JSON and extract category and name
+          if ! node -e "const data = require('/tmp/entry.json'); console.log(data.category); console.log(data.name);" 2>/dev/null; then
+            echo "❌ Invalid JSON in issue body"
+            cat /tmp/entry.json
             exit 1
           fi
           
-          echo "✅ Extracted fish entry: $FISH_ENTRY"
-          echo "✅ Fish name: $FISH_NAME"
+          CATEGORY=$(node -e "const data = require('/tmp/entry.json'); console.log(data.category);")
+          ENTRY_NAME=$(node -e "const data = require('/tmp/entry.json'); console.log(data.name);")
+          ACTION=$(echo "${{ github.event.issue.title }}" | cut -d' ' -f1 | tr '[:upper:]' '[:lower:]')
           
-          echo "fish_entry=${FISH_ENTRY}" >> $GITHUB_OUTPUT
-          echo "fish_name=${FISH_NAME}" >> $GITHUB_OUTPUT
+          if [ -z "$CATEGORY" ] || [ -z "$ENTRY_NAME" ]; then
+            echo "❌ Missing category or name in entry data"
+            cat /tmp/entry.json
+            exit 1
+          fi
+          
+          echo "✅ Extracted entry data"
+          echo "✅ Category: $CATEGORY"
+          echo "✅ Entry name: $ENTRY_NAME"
+          echo "✅ Action: $ACTION"
+          
+          echo "category=${CATEGORY}" >> $GITHUB_OUTPUT
+          echo "entry_name=${ENTRY_NAME}" >> $GITHUB_OUTPUT
+          echo "action=${ACTION}" >> $GITHUB_OUTPUT
           echo "issue_number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
       
       - name: Pull latest changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git pull origin main
+          git pull --rebase origin main || git pull origin main
       
-      - name: Read existing fish data
-        id: existing-data
+      - name: Read and update database
+        id: update-database
+        env:
+          CATEGORY: ${{ steps.extract-data.outputs.category }}
+          ENTRY_NAME: ${{ steps.extract-data.outputs.entry_name }}
+          ACTION: ${{ steps.extract-data.outputs.action }}
         run: |
-          if [ -f "data/fishdata.json" ]; then
-            CONTENT=$(cat data/fishdata.json)
-            echo "content<<EOF" >> $GITHUB_OUTPUT
-            echo "$CONTENT" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            echo "content=" >> $GITHUB_OUTPUT
+          # Initialize database structure if file doesn't exist
+          if [ ! -f "data/fishdata.json" ]; then
+            cat > data/fishdata.json << 'EOF'
+{
+  "fish": [],
+  "rods": [],
+  "baits": [],
+  "mutations": [],
+  "potions": [],
+  "utility": [],
+  "weather": [],
+  "season": [],
+  "enchanting": [],
+  "events": [],
+  "locations": [],
+  "admin-events": [],
+  "totem-events": [],
+  "mini-events": []
+}
+EOF
           fi
-      
-      - name: Update fish data
-        run: |
-          FISH_NAME="${{ steps.extract-data.outputs.fish_name }}"
-          NEW_ENTRY="${{ steps.extract-data.outputs.fish_entry }}"
-          EXISTING="${{ steps.existing-data.outputs.content }}"
           
-          # Remove old entry if exists
-          if echo "$EXISTING" | grep -q "^${FISH_NAME}|"; then
-            UPDATED=$(echo "$EXISTING" | grep -v "^${FISH_NAME}|")
-            echo "Removed existing entry for ${FISH_NAME}"
-          else
-            UPDATED="$EXISTING"
-          fi
+          # Read existing database
+          node << NODE_SCRIPT
+          const fs = require('fs');
+          const path = require('path');
           
-          # Add new entry
-          if [ -n "$UPDATED" ] && [ "${UPDATED: -1}" != "\n" ]; then
-            UPDATED="${UPDATED}\n"
-          fi
-          UPDATED="${UPDATED}${NEW_ENTRY}\n"
+          const dbPath = path.join(process.cwd(), 'data/fishdata.json');
+          const entryPath = '/tmp/entry.json';
+          const category = process.env.CATEGORY || 'fish';
           
-          echo -e "$UPDATED" > data/fishdata.json
-          echo "Added/updated entry for ${FISH_NAME}"
+          let database = {};
+          try {
+            const dbContent = fs.readFileSync(dbPath, 'utf8');
+            // Try to parse as JSON
+            try {
+              database = JSON.parse(dbContent);
+            } catch (e) {
+              // If not JSON, try to parse as old pipe format (fish only)
+              const lines = dbContent.split('\n');
+              database = {
+                fish: [],
+                rods: [],
+                baits: [],
+                mutations: [],
+                potions: [],
+                utility: [],
+                weather: [],
+                season: [],
+                enchanting: [],
+                events: [],
+                locations: [],
+                'admin-events': [],
+                'totem-events': [],
+                'mini-events': []
+              };
+              
+              for (const line of lines) {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith('//')) continue;
+                const parts = trimmed.split('|');
+                if (parts.length >= 6) {
+                  database.fish.push({
+                    name: parts[0]?.trim() || '',
+                    rarity: parts[1]?.trim() || '',
+                    location: parts[2]?.trim() || '',
+                    value: parts[3]?.trim() || '',
+                    powerRequired: parts[4]?.trim() || '',
+                    speed: parts[5]?.trim() || '',
+                    controlNeeded: parts[6]?.trim() || '',
+                    notes: parts[7]?.trim() || '',
+                    bestTime: parts[8]?.trim() || '',
+                    category: 'fish'
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            // Initialize empty database
+            database = {
+              fish: [],
+              rods: [],
+              baits: [],
+              mutations: [],
+              potions: [],
+              utility: [],
+              weather: [],
+              season: [],
+              enchanting: [],
+              events: [],
+              locations: [],
+              'admin-events': [],
+              'totem-events': [],
+              'mini-events': []
+            };
+          }
+          
+          // Ensure all categories exist
+          const categories = ['fish', 'rods', 'baits', 'mutations', 'potions', 'utility', 'weather', 'season', 'enchanting', 'events', 'locations', 'admin-events', 'totem-events', 'mini-events'];
+          categories.forEach(cat => {
+            if (!database[cat]) {
+              database[cat] = [];
+            }
+          });
+          
+          // Read new entry
+          const newEntry = JSON.parse(fs.readFileSync(entryPath, 'utf8'));
+          const entryCategory = newEntry.category || category;
+          
+          if (!database[entryCategory]) {
+            database[entryCategory] = [];
+          }
+          
+          // Remove existing entry with same name if editing
+          database[entryCategory] = database[entryCategory].filter(entry => entry.name !== newEntry.name);
+          
+          // Add new entry
+          database[entryCategory].push(newEntry);
+          
+          // Sort by name
+          database[entryCategory].sort((a, b) => {
+            const nameA = (a.name || '').toLowerCase();
+            const nameB = (b.name || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+          });
+          
+          // Write updated database
+          fs.writeFileSync(dbPath, JSON.stringify(database, null, 2) + '\n');
+          
+          console.log(`✅ Updated ${entryCategory} category`);
+          console.log(`✅ ${database[entryCategory].length} entries in ${entryCategory}`);
+          NODE_SCRIPT
+          
+          echo "Database updated successfully"
       
       - name: Commit and push
         run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
           git add data/fishdata.json
-          git commit -m "Add fish: ${{ steps.extract-data.outputs.fish_name }} (from issue #${{ steps.extract-data.outputs.issue_number }})"
+          
+          ACTION="${{ steps.extract-data.outputs.action }}"
+          CATEGORY="${{ steps.extract-data.outputs.category }}"
+          ENTRY_NAME="${{ steps.extract-data.outputs.entry_name }}"
+          ISSUE_NUM="${{ steps.extract-data.outputs.issue_number }}"
+          
+          if [ "$ACTION" == "edit" ]; then
+            COMMIT_MSG="${ACTION^} ${CATEGORY}: ${ENTRY_NAME} (from issue #${ISSUE_NUM})"
+          else
+            COMMIT_MSG="Add ${CATEGORY}: ${ENTRY_NAME} (from issue #${ISSUE_NUM})"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
           
           # Retry push with pull if it fails
           for i in 1 2 3; do
-            if git push origin main; then
+            if git push origin HEAD:main; then
               echo "Push successful"
               break
             else
               echo "Push failed, attempt $i. Pulling latest changes..."
               git pull --rebase origin main || git pull origin main
+              
               # Re-apply our change
-              FISH_NAME="${{ steps.extract-data.outputs.fish_name }}"
-              NEW_ENTRY="${{ steps.extract-data.outputs.fish_entry }}"
-              if [ -f "data/fishdata.json" ]; then
-                EXISTING=$(cat data/fishdata.json)
-              else
-                EXISTING=""
-              fi
-              if echo "$EXISTING" | grep -q "^${FISH_NAME}|"; then
-                UPDATED=$(echo "$EXISTING" | grep -v "^${FISH_NAME}|")
-              else
-                UPDATED="$EXISTING"
-              fi
-              if [ -n "$UPDATED" ] && [ "${UPDATED: -1}" != "\n" ]; then
-                UPDATED="${UPDATED}\n"
-              fi
-              UPDATED="${UPDATED}${NEW_ENTRY}\n"
-              echo -e "$UPDATED" > data/fishdata.json
+              CATEGORY="${{ steps.extract-data.outputs.category }}"
+              env CATEGORY="$CATEGORY" node << NODE_SCRIPT
+              const fs = require('fs');
+              const path = require('path');
+              
+              const dbPath = path.join(process.cwd(), 'data/fishdata.json');
+              const entryPath = '/tmp/entry.json';
+              const category = process.env.CATEGORY || 'fish';
+              
+              let database = {};
+              try {
+                const dbContent = fs.readFileSync(dbPath, 'utf8');
+                try {
+                  database = JSON.parse(dbContent);
+                } catch (e) {
+                  database = {
+                    fish: [], rods: [], baits: [], mutations: [], potions: [],
+                    utility: [], weather: [], season: [], enchanting: [], events: [],
+                    locations: [], 'admin-events': [], 'totem-events': [], 'mini-events': []
+                  };
+                }
+              } catch (e) {
+                database = {
+                  fish: [], rods: [], baits: [], mutations: [], potions: [],
+                  utility: [], weather: [], season: [], enchanting: [], events: [],
+                  locations: [], 'admin-events': [], 'totem-events': [], 'mini-events': []
+                };
+              }
+              
+              const categories = ['fish', 'rods', 'baits', 'mutations', 'potions', 'utility', 'weather', 'season', 'enchanting', 'events', 'locations', 'admin-events', 'totem-events', 'mini-events'];
+              categories.forEach(cat => {
+                if (!database[cat]) database[cat] = [];
+              });
+              
+              const newEntry = JSON.parse(fs.readFileSync(entryPath, 'utf8'));
+              const entryCategory = newEntry.category || category;
+              
+              if (!database[entryCategory]) database[entryCategory] = [];
+              database[entryCategory] = database[entryCategory].filter(entry => entry.name !== newEntry.name);
+              database[entryCategory].push(newEntry);
+              database[entryCategory].sort((a, b) => (a.name || '').toLowerCase().localeCompare((b.name || '').toLowerCase()));
+              
+              fs.writeFileSync(dbPath, JSON.stringify(database, null, 2) + '\n');
+              NODE_SCRIPT
+              
               git add data/fishdata.json
-              git commit -m "Add fish: ${{ steps.extract-data.outputs.fish_name }} (from issue #${{ steps.extract-data.outputs.issue_number }})"
+              git commit -m "$COMMIT_MSG"
             fi
           done
       
@@ -154,12 +324,17 @@ jobs:
           script: |
             const commitSha = '${{ steps.get-commit.outputs.commit_sha }}';
             const repo = context.repo;
+            const action = '${{ steps.extract-data.outputs.action }}';
+            const category = '${{ steps.extract-data.outputs.category }}';
+            const entryName = '${{ steps.extract-data.outputs.entry_name }}';
+            
+            const actionText = action === 'edit' ? 'updated' : 'added';
             
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: repo.owner,
               repo: repo.repo,
-              body: `✅ Fish entry processed successfully! The fish has been added to the database.\n\n` +
+              body: `✅ ${category.charAt(0).toUpperCase() + category.slice(1)} entry ${actionText} successfully! The entry "${entryName}" has been ${actionText} to the database.\n\n` +
                     `View the commit: https://github.com/${repo.owner}/${repo.repo}/commit/${commitSha}`
             });
             
@@ -170,4 +345,3 @@ jobs:
               repo: repo.repo,
               state: 'closed'
             });
-

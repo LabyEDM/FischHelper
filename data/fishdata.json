@@ -1,18 +1,173 @@
-// FischPedia Community Database
-// Format: fishname|rarity|location|value|powerRequired|speed|controlNeeded|notes|bestTime
-// Add new fish entries below following the same format
-
-Common Carp|Common|Freshwater|10|5|Slow|3|Found in most freshwater areas|
-Bass|Common|Freshwater|15|8|Medium|5|Common in lakes and rivers|
-Trout|Common|Freshwater|12|6|Medium|4|Prefers cold water|
-Salmon|Uncommon|Freshwater|25|12|Fast|8|Found in rivers, requires good control|
-Pike|Uncommon|Freshwater|30|15|Fast|10|Aggressive fish, high power needed|
-Tuna|Rare|Ocean|50|25|Very Fast|15|Deep ocean fish, requires high stats|
-Shark|Epic|Ocean|100|50|Very Fast|30|Dangerous, requires maxed rod stats|
-Marlin|Legendary|Ocean|200|75|Extreme|50|Ultimate challenge, needs perfect setup|
-Goldfish|Common|Any|5|3|Very Slow|2|Easy catch, low value|
-Catfish|Common|Freshwater|18|10|Slow|6|Bottom feeder, patient fishing|
-Bread|Legendary|Hamburg|1|1|Very Slow|1||mid morning but also no day
-hammmmm|Epic|aaaaaaa|1|1|Slow|1||aaaaaaaaaaaa
-a real fisch|Legendary|theymademe|22|33|Medium|51|pole|gayday
-
+{
+  "fish": [
+    {
+      "name": "Common Carp",
+      "rarity": "Common",
+      "location": "Freshwater",
+      "value": "10",
+      "powerRequired": "5",
+      "speed": "Slow",
+      "controlNeeded": "3",
+      "notes": "Found in most freshwater areas",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Bass",
+      "rarity": "Common",
+      "location": "Freshwater",
+      "value": "15",
+      "powerRequired": "8",
+      "speed": "Medium",
+      "controlNeeded": "5",
+      "notes": "Common in lakes and rivers",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Trout",
+      "rarity": "Common",
+      "location": "Freshwater",
+      "value": "12",
+      "powerRequired": "6",
+      "speed": "Medium",
+      "controlNeeded": "4",
+      "notes": "Prefers cold water",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Salmon",
+      "rarity": "Uncommon",
+      "location": "Freshwater",
+      "value": "25",
+      "powerRequired": "12",
+      "speed": "Fast",
+      "controlNeeded": "8",
+      "notes": "Found in rivers, requires good control",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Pike",
+      "rarity": "Uncommon",
+      "location": "Freshwater",
+      "value": "30",
+      "powerRequired": "15",
+      "speed": "Fast",
+      "controlNeeded": "10",
+      "notes": "Aggressive fish, high power needed",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Tuna",
+      "rarity": "Rare",
+      "location": "Ocean",
+      "value": "50",
+      "powerRequired": "25",
+      "speed": "Very Fast",
+      "controlNeeded": "15",
+      "notes": "Deep ocean fish, requires high stats",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Shark",
+      "rarity": "Epic",
+      "location": "Ocean",
+      "value": "100",
+      "powerRequired": "50",
+      "speed": "Very Fast",
+      "controlNeeded": "30",
+      "notes": "Dangerous, requires maxed rod stats",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Marlin",
+      "rarity": "Legendary",
+      "location": "Ocean",
+      "value": "200",
+      "powerRequired": "75",
+      "speed": "Extreme",
+      "controlNeeded": "50",
+      "notes": "Ultimate challenge, needs perfect setup",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Goldfish",
+      "rarity": "Common",
+      "location": "Any",
+      "value": "5",
+      "powerRequired": "3",
+      "speed": "Very Slow",
+      "controlNeeded": "2",
+      "notes": "Easy catch, low value",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Catfish",
+      "rarity": "Common",
+      "location": "Freshwater",
+      "value": "18",
+      "powerRequired": "10",
+      "speed": "Slow",
+      "controlNeeded": "6",
+      "notes": "Bottom feeder, patient fishing",
+      "bestTime": "",
+      "category": "fish"
+    },
+    {
+      "name": "Bread",
+      "rarity": "Legendary",
+      "location": "Hamburg",
+      "value": "1",
+      "powerRequired": "1",
+      "speed": "Very Slow",
+      "controlNeeded": "1",
+      "notes": "",
+      "bestTime": "mid morning but also no day",
+      "category": "fish"
+    },
+    {
+      "name": "hammmmm",
+      "rarity": "Epic",
+      "location": "aaaaaaa",
+      "value": "1",
+      "powerRequired": "1",
+      "speed": "Slow",
+      "controlNeeded": "1",
+      "notes": "",
+      "bestTime": "aaaaaaaaaaaa",
+      "category": "fish"
+    },
+    {
+      "name": "a real fisch",
+      "rarity": "Legendary",
+      "location": "theymademe",
+      "value": "22",
+      "powerRequired": "33",
+      "speed": "Medium",
+      "controlNeeded": "51",
+      "notes": "pole",
+      "bestTime": "gayday",
+      "category": "fish"
+    }
+  ],
+  "rods": [],
+  "baits": [],
+  "mutations": [],
+  "potions": [],
+  "utility": [],
+  "weather": [],
+  "season": [],
+  "enchanting": [],
+  "events": [],
+  "locations": [],
+  "admin-events": [],
+  "totem-events": [],
+  "mini-events": []
+}
