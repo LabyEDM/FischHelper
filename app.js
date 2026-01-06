@@ -129,14 +129,15 @@ const categoryForms = {
         fields: [
             { id: 'name', label: 'Location Name *', type: 'text', required: true },
             { id: 'description', label: 'Description', type: 'textarea' },
-            { id: 'notes', label: 'Notes', type: 'textarea' }
+            { id: 'lore', label: 'Lore', type: 'textarea' },
+            { id: 'loot', label: 'Loot', type: 'textarea' },
+            { id: 'npc', label: 'NPC', type: 'textarea' },
+            { id: 'quests', label: 'Quests', type: 'textarea' }
         ]
     },
     'radar-location': {
         fields: [
-            { id: 'name', label: 'Radar Location Name *', type: 'text', required: true },
-            { id: 'description', label: 'Description', type: 'textarea' },
-            { id: 'notes', label: 'Notes', type: 'textarea' }
+            { id: 'name', label: 'Radar Location Name *', type: 'text', required: true }
         ]
     },
     'admin-events': {
