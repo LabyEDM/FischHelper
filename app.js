@@ -46,13 +46,14 @@ const categoryForms = {
     rods: {
         fields: [
             { id: 'name', label: 'Rod Name *', type: 'text', required: true },
-            { id: 'lureSpeed', label: 'Lure Speed', type: 'text' },
-            { id: 'luck', label: 'Luck', type: 'text' },
-            { id: 'control', label: 'Control', type: 'text' },
-            { id: 'resilience', label: 'Resilience', type: 'text' },
-            { id: 'maxKG', label: 'Max KG', type: 'text' },
+            { id: 'lureSpeed', label: 'Lure Speed', type: 'number' },
+            { id: 'luck', label: 'Luck', type: 'number' },
+            { id: 'control', label: 'Control', type: 'number' },
+            { id: 'resilience', label: 'Resilience', type: 'number' },
+            { id: 'maxKG', label: 'Max KG', type: 'number-infinite' },
             { id: 'uniqueAbility', label: 'Unique Ability', type: 'textarea' },
-            { id: 'uniqueMechanic', label: 'Unique Mechanic', type: 'textarea' }
+            { id: 'uniqueMechanic', label: 'Unique Mechanic', type: 'textarea' },
+            { id: 'abilityMutationChance', label: 'Ability Mutation Chance', type: 'composite-mutation-chance' }
         ]
     },
     baits: {
@@ -70,9 +71,9 @@ const categoryForms = {
     mutations: {
         fields: [
             { id: 'name', label: 'Mutation Name *', type: 'text', required: true },
-            { id: 'attributes', label: 'Attributes with Multiplier', type: 'text', multi: true },
-            { id: 'mutation', label: 'Mutation with Multiplier', type: 'text', multi: true },
-            { id: 'mutationPriority', label: 'Mutation Priority', type: 'text' }
+            { id: 'mutationMulti', label: 'Mutation Multi', type: 'number' },
+            { id: 'mutationPriority', label: 'Mutation Priority', type: 'text' },
+            { id: 'whereObtained', label: 'Where Obtained', type: 'textarea' }
         ]
     },
     potions: {
@@ -191,6 +192,9 @@ function loadCategoryForm() {
     
     // Populate dynamic selects after form is loaded
     populateDynamicSelects(formDef);
+    
+    // Setup number-infinite fields
+    setupNumberInfiniteFields(formDef);
 }
 
 // Create single field
@@ -211,6 +215,33 @@ function createField(field) {
         input += `</select>`;
     } else if (field.type === 'textarea') {
         input = `<textarea id="${field.id}" ${required} placeholder="${field.label}"></textarea>`;
+    } else if (field.type === 'composite-mutation-chance') {
+        input = `
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; align-items: end;">
+                <div>
+                    <label for="${field.id}_percentage" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666;">Percentage (%)</label>
+                    <input type="number" id="${field.id}_percentage" min="0" max="100" step="0.1" placeholder="0-100" style="width: 100%;">
+                </div>
+                <div>
+                    <label for="${field.id}_mutation" style="display: block; margin-bottom: 5px; font-size: 0.9em; color: #666;">Mutation</label>
+                    <select id="${field.id}_mutation" style="width: 100%;">
+                        <option value="">Select Mutation</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" id="${field.id}" name="${field.id}">
+        `;
+    } else if (field.type === 'number-infinite') {
+        input = `
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="number" id="${field.id}_number" ${required} placeholder="${field.label}" style="flex: 1;" min="0" step="0.01">
+                <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; cursor: pointer;">
+                    <input type="checkbox" id="${field.id}_infinite" style="width: auto; margin: 0;">
+                    <span>Infinite</span>
+                </label>
+            </div>
+            <input type="hidden" id="${field.id}" name="${field.id}">
+        `;
     } else {
         input = `<input type="${field.type}" id="${field.id}" ${required} placeholder="${field.label}">`;
     }
@@ -243,6 +274,74 @@ function populateDynamicSelects(formDef) {
                 option.value = item.name || item;
                 option.textContent = item.name || item;
                 selectElement.appendChild(option);
+            });
+        } else if (field.type === 'composite-mutation-chance') {
+            // Populate mutation dropdown for composite field
+            const mutationSelect = document.getElementById(`${field.id}_mutation`);
+            if (!mutationSelect) return;
+            
+            const sourceData = currentDatabase['mutations'] || [];
+            sourceData.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.name || item;
+                option.textContent = item.name || item;
+                mutationSelect.appendChild(option);
+            });
+            
+            // Add event listeners to combine values
+            const percentageInput = document.getElementById(`${field.id}_percentage`);
+            const hiddenInput = document.getElementById(field.id);
+            
+            function updateCompositeValue() {
+                const percentage = percentageInput?.value || '';
+                const mutation = mutationSelect?.value || '';
+                if (percentage && mutation) {
+                    hiddenInput.value = `${percentage}% - ${mutation}`;
+                } else if (percentage) {
+                    hiddenInput.value = `${percentage}%`;
+                } else if (mutation) {
+                    hiddenInput.value = mutation;
+                } else {
+                    hiddenInput.value = '';
+                }
+            }
+            
+            if (percentageInput) {
+                percentageInput.addEventListener('input', updateCompositeValue);
+            }
+            if (mutationSelect) {
+                mutationSelect.addEventListener('change', updateCompositeValue);
+            }
+        }
+    });
+}
+
+// Setup number-infinite fields
+function setupNumberInfiniteFields(formDef) {
+    formDef.fields.forEach(field => {
+        if (field.type === 'number-infinite') {
+            const numberInput = document.getElementById(`${field.id}_number`);
+            const infiniteCheckbox = document.getElementById(`${field.id}_infinite`);
+            const hiddenInput = document.getElementById(field.id);
+            
+            if (!numberInput || !infiniteCheckbox || !hiddenInput) return;
+            
+            function updateValue() {
+                if (infiniteCheckbox.checked) {
+                    numberInput.disabled = true;
+                    numberInput.value = '';
+                    hiddenInput.value = 'Infinite';
+                } else {
+                    numberInput.disabled = false;
+                    hiddenInput.value = numberInput.value || '';
+                }
+            }
+            
+            infiniteCheckbox.addEventListener('change', updateValue);
+            numberInput.addEventListener('input', function() {
+                if (!infiniteCheckbox.checked) {
+                    hiddenInput.value = numberInput.value || '';
+                }
             });
         }
     });
@@ -636,11 +735,30 @@ function loadEntryForEdit() {
     // Populate dynamic selects first
     populateDynamicSelects(formDef);
     
+    // Setup number-infinite fields
+    setupNumberInfiniteFields(formDef);
+    
     // Populate fields
     formDef.fields.forEach(field => {
         const element = document.getElementById(field.id);
         if (element && entry[field.id]) {
-            if (field.multi) {
+            if (field.type === 'number-infinite') {
+                // Handle number-infinite field
+                const numberInput = document.getElementById(`${field.id}_number`);
+                const infiniteCheckbox = document.getElementById(`${field.id}_infinite`);
+                const value = String(entry[field.id]);
+                
+                if (value.toLowerCase() === 'infinite') {
+                    infiniteCheckbox.checked = true;
+                    numberInput.disabled = true;
+                    element.value = 'Infinite';
+                } else {
+                    infiniteCheckbox.checked = false;
+                    numberInput.disabled = false;
+                    numberInput.value = value;
+                    element.value = value;
+                }
+            } else if (field.multi) {
                 const values = String(entry[field.id]).split('|');
                 element.value = entry[field.id];
                 values.forEach(val => {
@@ -655,6 +773,24 @@ function loadEntryForEdit() {
                         tagsDiv.appendChild(tag);
                     }
                 });
+            } else if (field.type === 'composite-mutation-chance') {
+                // Parse composite value: "50% - MutationName" or "50%" or "MutationName"
+                const value = String(entry[field.id]);
+                const percentageMatch = value.match(/(\d+(?:\.\d+)?)%/);
+                const mutationMatch = value.match(/-\s*(.+)$/);
+                
+                const percentageInput = document.getElementById(`${field.id}_percentage`);
+                const mutationSelect = document.getElementById(`${field.id}_mutation`);
+                
+                if (percentageMatch && percentageInput) {
+                    percentageInput.value = percentageMatch[1];
+                }
+                if (mutationMatch && mutationSelect) {
+                    mutationSelect.value = mutationMatch[1].trim();
+                }
+                
+                // Set hidden field value
+                element.value = entry[field.id];
             } else {
                 element.value = entry[field.id];
             }
