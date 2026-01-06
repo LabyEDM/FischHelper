@@ -32,14 +32,14 @@ const categoryForms = {
     fish: {
         fields: [
             { id: 'name', label: 'Fish Name *', type: 'text', required: true },
-            { id: 'weight', label: 'Weight', type: 'text' },
+            { id: 'location', label: 'Location', type: 'text' },
+            { id: 'weight', label: 'Weight', type: 'number' },
             { id: 'rarity', label: 'Rarity *', type: 'select', required: true, options: ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] },
             { id: 'value', label: 'Value *', type: 'number', required: true },
-            { id: 'preferredBait', label: 'Preferred Bait', type: 'text' },
-            { id: 'mutationAttributes', label: 'Mutation Attributes', type: 'text' },
-            { id: 'weatherCondition', label: 'Weather Condition', type: 'text' },
-            { id: 'time', label: 'Time (minutes)', type: 'number', min: 0, max: 59 },
-            { id: 'season', label: 'Season', type: 'text' },
+            { id: 'preferredBait', label: 'Preferred Bait', type: 'select-dynamic', sourceArray: 'baits' },
+            { id: 'weatherCondition', label: 'Weather Condition', type: 'select-dynamic', sourceArray: 'weather' },
+            { id: 'time', label: 'Time', type: 'text' },
+            { id: 'season', label: 'Season', type: 'select-dynamic', sourceArray: 'season' },
             { id: 'radarLocation', label: 'Radar Location', type: 'text' }
         ]
     },
@@ -70,23 +70,16 @@ const categoryForms = {
     mutations: {
         fields: [
             { id: 'name', label: 'Mutation Name *', type: 'text', required: true },
-            { id: 'mutationMultiplier', label: 'Mutation Multiplier (e.g., 1.5x, 2x, 0.75x) *', type: 'text', required: true, placeholder: 'Format: 1.5x or 2x' },
-            { id: 'mutationPriority', label: 'Mutation Priority', type: 'text' },
-            { id: 'notes', label: 'Notes', type: 'textarea' }
-        ]
-    },
-    attributes: {
-        fields: [
-            { id: 'name', label: 'Attribute Name *', type: 'text', required: true },
-            { id: 'multiplier', label: 'Multiplier (e.g., 1.5x, 2x, 0.75x) *', type: 'text', required: true, placeholder: 'Format: 1.5x or 2x' },
-            { id: 'description', label: 'Description', type: 'textarea' }
+            { id: 'attributes', label: 'Attributes with Multiplier', type: 'text', multi: true },
+            { id: 'mutation', label: 'Mutation with Multiplier', type: 'text', multi: true },
+            { id: 'mutationPriority', label: 'Mutation Priority', type: 'text' }
         ]
     },
     potions: {
         fields: [
             { id: 'name', label: 'Potion Name *', type: 'text', required: true },
             { id: 'effect', label: 'Effect', type: 'textarea' },
-            { id: 'duration', label: 'Duration (minutes)', type: 'number', min: 0, max: 59 },
+            { id: 'duration', label: 'Duration', type: 'text' },
             { id: 'notes', label: 'Notes', type: 'textarea' }
         ]
     },
@@ -127,8 +120,8 @@ const categoryForms = {
         fields: [
             { id: 'name', label: 'Event Name *', type: 'text', required: true },
             { id: 'description', label: 'Description', type: 'textarea' },
-            { id: 'startDate', label: 'Start Date', type: 'date' },
-            { id: 'endDate', label: 'End Date', type: 'date' },
+            { id: 'startDate', label: 'Start Date', type: 'text' },
+            { id: 'endDate', label: 'End Date', type: 'text' },
             { id: 'buffs', label: 'Buffs', type: 'textarea' }
         ]
     },
@@ -188,6 +181,9 @@ function loadCategoryForm() {
     
     document.getElementById('formFields').innerHTML = html;
     document.getElementById('submitBtn').style.display = 'block';
+    
+    // Populate dynamic selects after form is loaded
+    populateDynamicSelects(formDef);
 }
 
 // Create single field
@@ -202,14 +198,14 @@ function createField(field) {
             input += `<option value="${opt}">${opt}</option>`;
         });
         input += `</select>`;
+    } else if (field.type === 'select-dynamic') {
+        input = `<select id="${field.id}" ${required}>`;
+        input += `<option value="">Select ${field.label.replace('*', '').trim()}</option>`;
+        input += `</select>`;
     } else if (field.type === 'textarea') {
-        const placeholder = field.placeholder || field.label;
-        input = `<textarea id="${field.id}" ${required} placeholder="${placeholder}"></textarea>`;
+        input = `<textarea id="${field.id}" ${required} placeholder="${field.label}"></textarea>`;
     } else {
-        const placeholder = field.placeholder || field.label;
-        const min = field.min !== undefined ? `min="${field.min}"` : '';
-        const max = field.max !== undefined ? `max="${field.max}"` : '';
-        input = `<input type="${field.type}" id="${field.id}" ${required} ${min} ${max} placeholder="${placeholder}">`;
+        input = `<input type="${field.type}" id="${field.id}" ${required} placeholder="${field.label}">`;
     }
     
     return `
@@ -218,6 +214,31 @@ function createField(field) {
             ${input}
         </div>
     `;
+}
+
+// Populate dynamic selects from database
+function populateDynamicSelects(formDef) {
+    formDef.fields.forEach(field => {
+        if (field.type === 'select-dynamic' && field.sourceArray) {
+            const selectElement = document.getElementById(field.id);
+            if (!selectElement) return;
+            
+            // Keep the first option (empty/default), remove others
+            const firstOption = selectElement.options[0];
+            selectElement.innerHTML = '';
+            if (firstOption) {
+                selectElement.appendChild(firstOption);
+            }
+            
+            const sourceData = currentDatabase[field.sourceArray] || [];
+            sourceData.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.name || item;
+                option.textContent = item.name || item;
+                selectElement.appendChild(option);
+            });
+        }
+    });
 }
 
 // Create multi-input field (for arrays)
@@ -325,22 +346,6 @@ function openGitHubIssue(action = 'add') {
         return;
     }
     
-    // Validate multiplier format if present
-    if (formData.mutationMultiplier) {
-        const multiplierPattern = /^\d+(\.\d+)?x$/i;
-        if (!multiplierPattern.test(formData.mutationMultiplier)) {
-            alert('Mutation Multiplier must be in format: 1.5x, 2x, 0.75x, etc.');
-            return;
-        }
-    }
-    if (formData.multiplier) {
-        const multiplierPattern = /^\d+(\.\d+)?x$/i;
-        if (!multiplierPattern.test(formData.multiplier)) {
-            alert('Multiplier must be in format: 1.5x, 2x, 0.75x, etc.');
-            return;
-        }
-    }
-    
     // Create formatted entry (JSON format)
     const entryData = {
         category: category,
@@ -401,6 +406,24 @@ async function loadDatabase() {
         currentDatabase = parseDatabase(text);
         
         displayDatabase();
+        
+        // Repopulate dynamic selects if a category is selected on the add tab
+        const selectedCategory = document.getElementById('categorySelect')?.value;
+        if (selectedCategory) {
+            const formDef = categoryForms[selectedCategory];
+            if (formDef) {
+                populateDynamicSelects(formDef);
+            }
+        }
+        
+        // Repopulate dynamic selects if editing
+        const editCategory = document.getElementById('editCategorySelect')?.value;
+        if (editCategory) {
+            const formDef = categoryForms[editCategory];
+            if (formDef) {
+                populateDynamicSelects(formDef);
+            }
+        }
     } catch (error) {
         console.error('Error loading data:', error);
         dataList.innerHTML = `
@@ -419,7 +442,6 @@ function parseDatabase(text) {
         rods: [],
         baits: [],
         mutations: [],
-        attributes: [],
         potions: [],
         utility: [],
         weather: [],
@@ -602,6 +624,9 @@ function loadEntryForEdit() {
     
     document.getElementById('editFormFields').innerHTML = html;
     document.getElementById('editSubmitBtn').style.display = 'block';
+    
+    // Populate dynamic selects first
+    populateDynamicSelects(formDef);
     
     // Populate fields
     formDef.fields.forEach(field => {
