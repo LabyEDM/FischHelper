@@ -161,9 +161,89 @@
   "baits": [],
   "mutations": [],
   "potions": [],
-  "utility": [],
-  "weather": [],
-  "season": [],
+  "utility": [
+    {
+      "name": "Angler's Glove",
+      "ability": "1.1"
+    }
+  ],
+  "weather": [
+    {
+      "name": "Clear",
+      "notes": ""
+    },
+    {
+      "name": "Foggy",
+      "notes": ""
+    },
+    {
+      "name": "Windy",
+      "notes": ""
+    },
+    {
+      "name": "Rain",
+      "notes": ""
+    },
+    {
+      "name": "Starfall",
+      "notes": "",
+      "rodProgressSpeedBuff": "10",
+      "mutationChance": "5",
+      "mutationSelect": ""
+    },
+    {
+      "name": "Tornado",
+      "notes": "",
+      "lureSpeedBuff": "20"
+    },
+    {
+      "name": "Rainbow",
+      "notes": "",
+      "luckMultiplier": "11",
+      "mutationChance": "15",
+      "mutationSelect": "",
+      "mutationSelect2": ""
+    },
+    {
+      "name": "Eclipse",
+      "notes": "",
+      "mutationChance": "10",
+      "mutationSelect": ""
+    },
+    {
+      "name": "Aurora Borealis",
+      "notes": "",
+      "luckMultiplier": "9",
+      "mutationChance": "1",
+      "mutationSelect": ""
+    }
+  ],
+  "season": [
+    {
+      "name": "Spring",
+      "duration": "576",
+      "startTimestamp": "",
+      "notes": ""
+    },
+    {
+      "name": "Summer",
+      "duration": "576",
+      "startTimestamp": "",
+      "notes": ""
+    },
+    {
+      "name": "Autumn",
+      "duration": "576",
+      "startTimestamp": "",
+      "notes": ""
+    },
+    {
+      "name": "Winter",
+      "duration": "576",
+      "startTimestamp": "",
+      "notes": ""
+    }
+  ],
   "enchanting": [],
   "events": [],
   "location": [],

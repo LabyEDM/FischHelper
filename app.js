@@ -59,12 +59,13 @@ const categoryForms = {
     baits: {
         fields: [
             { id: 'name', label: 'Bait Name *', type: 'text', required: true },
-            { id: 'preferredLuck', label: 'Preferred Luck', type: 'text' },
-            { id: 'universalLuck', label: 'Universal Luck', type: 'text' },
-            { id: 'resilience', label: 'Resilience', type: 'text' },
-            { id: 'lureSpeed', label: 'Lure Speed', type: 'text' },
+            { id: 'preferredLuck', label: 'Preferred Luck', type: 'number-negative' },
+            { id: 'universalLuck', label: 'Universal Luck', type: 'number-negative' },
+            { id: 'resilience', label: 'Resilience', type: 'number-negative' },
+            { id: 'lureSpeed', label: 'Lure Speed', type: 'number-negative' },
             { id: 'uniqueAbility', label: 'Unique Ability', type: 'textarea' },
-            { id: 'favoringFish', label: 'Favoring Fish', type: 'text', multi: true },
+            { id: 'favoringFish', label: 'Favoring Fish', type: 'select-dynamic', sourceArray: 'fish', multi: true },
+            { id: 'location', label: 'Location', type: 'select-dynamic', sourceArray: 'location' },
             { id: 'whereObtained', label: 'Where Obtained', type: 'text' }
         ]
     },
@@ -72,39 +73,41 @@ const categoryForms = {
         fields: [
             { id: 'name', label: 'Mutation Name *', type: 'text', required: true },
             { id: 'mutationMulti', label: 'Mutation Multi', type: 'number' },
-            { id: 'mutationPriority', label: 'Mutation Priority', type: 'text' },
+            { id: 'mutationPriority', label: 'Mutation Priority', type: 'number' },
             { id: 'whereObtained', label: 'Where Obtained', type: 'textarea' }
         ]
     },
     potions: {
         fields: [
             { id: 'name', label: 'Potion Name *', type: 'text', required: true },
-            { id: 'effect', label: 'Effect', type: 'textarea' },
-            { id: 'duration', label: 'Duration', type: 'text' },
-            { id: 'notes', label: 'Notes', type: 'textarea' }
+            { id: 'duration', label: 'Duration (minutes)', type: 'number' },
+            { id: 'effect', label: 'Effect', type: 'textarea' }
         ]
     },
     utility: {
         fields: [
             { id: 'name', label: 'Item Name *', type: 'text', required: true },
-            { id: 'equipableGear', label: 'Equipable Gear', type: 'text' },
-            { id: 'ability', label: 'Ability/Notes', type: 'textarea' }
+            { id: 'ability', label: 'Bait Stats Multiplier', type: 'number', step: '0.1' }
         ]
     },
     weather: {
         fields: [
             { id: 'name', label: 'Weather Type *', type: 'text', required: true },
-            { id: 'notes', label: 'Notes/Buffs', type: 'textarea' },
-            { id: 'locks', label: 'Locks (Fish/Mutations)', type: 'text', multi: true },
-            { id: 'unlocks', label: 'Unlocks (Fish/Mutations)', type: 'text', multi: true }
+            { id: 'notes', label: 'Notes', type: 'textarea' },
+            { id: 'rodProgressSpeedBuff', label: 'Rod Progress Speed Buff (%)', type: 'number', step: '0.1' },
+            { id: 'lureSpeedBuff', label: 'Lure Speed Buff (%)', type: 'number', step: '0.1' },
+            { id: 'luckMultiplier', label: 'Luck Multiplier', type: 'number', step: '0.1' },
+            { id: 'mutationChance', label: 'Mutation Chance (%)', type: 'number', step: '0.1' },
+            { id: 'mutationSelect', label: 'Mutation', type: 'select-dynamic', sourceArray: 'mutations' },
+            { id: 'mutationSelect2', label: 'Mutation 2', type: 'select-dynamic', sourceArray: 'mutations' }
         ]
     },
     season: {
         fields: [
             { id: 'name', label: 'Season Name *', type: 'text', required: true },
-            { id: 'fishPreferred', label: 'Fish Preferred Season', type: 'text', multi: true },
-            { id: 'unlocks', label: 'Unlocks', type: 'text', multi: true },
-            { id: 'locks', label: 'Locks', type: 'text', multi: true }
+            { id: 'duration', label: 'Duration (minutes)', type: 'number', value: '576' },
+            { id: 'startTimestamp', label: 'Start Timestamp (for fine-tuning)', type: 'datetime-local' },
+            { id: 'notes', label: 'Notes', type: 'textarea' }
         ]
     },
     enchanting: {
@@ -195,6 +198,9 @@ function loadCategoryForm() {
     
     // Setup number-infinite fields
     setupNumberInfiniteFields(formDef);
+    
+    // Setup number-negative fields
+    setupNumberNegativeFields(formDef);
 }
 
 // Create single field
@@ -210,9 +216,25 @@ function createField(field) {
         });
         input += `</select>`;
     } else if (field.type === 'select-dynamic') {
-        input = `<select id="${field.id}" ${required}>`;
-        input += `<option value="">Select ${field.label.replace('*', '').trim()}</option>`;
-        input += `</select>`;
+        if (field.multi) {
+            // Multi-select dynamic - use the multi-input system
+            return createMultiInputField(field);
+        } else {
+            input = `<select id="${field.id}" ${required}>`;
+            input += `<option value="">Select ${field.label.replace('*', '').trim()}</option>`;
+            input += `</select>`;
+        }
+    } else if (field.type === 'number-negative') {
+        input = `
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="number" id="${field.id}_number" ${required} placeholder="${field.label}" style="flex: 1;" step="0.01">
+                <label style="display: flex; align-items: center; gap: 5px; white-space: nowrap; cursor: pointer;">
+                    <input type="checkbox" id="${field.id}_negative" style="width: auto; margin: 0;">
+                    <span>Negative</span>
+                </label>
+            </div>
+            <input type="hidden" id="${field.id}" name="${field.id}">
+        `;
     } else if (field.type === 'textarea') {
         input = `<textarea id="${field.id}" ${required} placeholder="${field.label}"></textarea>`;
     } else if (field.type === 'composite-mutation-chance') {
@@ -258,23 +280,37 @@ function createField(field) {
 function populateDynamicSelects(formDef) {
     formDef.fields.forEach(field => {
         if (field.type === 'select-dynamic' && field.sourceArray) {
-            const selectElement = document.getElementById(field.id);
-            if (!selectElement) return;
-            
-            // Keep the first option (empty/default), remove others
-            const firstOption = selectElement.options[0];
-            selectElement.innerHTML = '';
-            if (firstOption) {
-                selectElement.appendChild(firstOption);
+            if (field.multi) {
+                // Handle multi-select-dynamic - populate the dropdown input
+                const selectInput = document.getElementById(`${field.id}_input`);
+                if (!selectInput) return;
+                
+                const sourceData = currentDatabase[field.sourceArray] || [];
+                sourceData.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.name || item;
+                    option.textContent = item.name || item;
+                    selectInput.appendChild(option);
+                });
+            } else {
+                const selectElement = document.getElementById(field.id);
+                if (!selectElement) return;
+                
+                // Keep the first option (empty/default), remove others
+                const firstOption = selectElement.options[0];
+                selectElement.innerHTML = '';
+                if (firstOption) {
+                    selectElement.appendChild(firstOption);
+                }
+                
+                const sourceData = currentDatabase[field.sourceArray] || [];
+                sourceData.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.name || item;
+                    option.textContent = item.name || item;
+                    selectElement.appendChild(option);
+                });
             }
-            
-            const sourceData = currentDatabase[field.sourceArray] || [];
-            sourceData.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.name || item;
-                option.textContent = item.name || item;
-                selectElement.appendChild(option);
-            });
         } else if (field.type === 'composite-mutation-chance') {
             // Populate mutation dropdown for composite field
             const mutationSelect = document.getElementById(`${field.id}_mutation`);
@@ -347,19 +383,61 @@ function setupNumberInfiniteFields(formDef) {
     });
 }
 
+// Setup number-negative fields
+function setupNumberNegativeFields(formDef) {
+    formDef.fields.forEach(field => {
+        if (field.type === 'number-negative') {
+            const numberInput = document.getElementById(`${field.id}_number`);
+            const negativeCheckbox = document.getElementById(`${field.id}_negative`);
+            const hiddenInput = document.getElementById(field.id);
+            
+            if (!numberInput || !negativeCheckbox || !hiddenInput) return;
+            
+            function updateValue() {
+                const value = numberInput.value || '';
+                if (value) {
+                    hiddenInput.value = negativeCheckbox.checked ? `-${value}` : value;
+                } else {
+                    hiddenInput.value = '';
+                }
+            }
+            
+            negativeCheckbox.addEventListener('change', updateValue);
+            numberInput.addEventListener('input', updateValue);
+        }
+    });
+}
+
 // Create multi-input field (for arrays)
 function createMultiInputField(field) {
-    return `
-        <div class="form-group">
-            <label>${field.label}</label>
-            <div class="multi-input-group">
-                <input type="text" id="${field.id}_input" placeholder="Add ${field.label.toLowerCase()}">
-                <button type="button" onclick="addMultiValue('${field.id}')">Add</button>
+    if (field.type === 'select-dynamic' && field.multi) {
+        // Dynamic multi-select - use dropdown
+        return `
+            <div class="form-group">
+                <label>${field.label}</label>
+                <div class="multi-input-group">
+                    <select id="${field.id}_input" style="flex: 1;">
+                        <option value="">Select ${field.label.toLowerCase()}</option>
+                    </select>
+                    <button type="button" onclick="addMultiValue('${field.id}')">Add</button>
+                </div>
+                <div id="${field.id}_tags" class="tag-list"></div>
+                <input type="hidden" id="${field.id}" name="${field.id}">
             </div>
-            <div id="${field.id}_tags" class="tag-list"></div>
-            <input type="hidden" id="${field.id}" name="${field.id}">
-        </div>
-    `;
+        `;
+    } else {
+        return `
+            <div class="form-group">
+                <label>${field.label}</label>
+                <div class="multi-input-group">
+                    <input type="text" id="${field.id}_input" placeholder="Add ${field.label.toLowerCase()}">
+                    <button type="button" onclick="addMultiValue('${field.id}')">Add</button>
+                </div>
+                <div id="${field.id}_tags" class="tag-list"></div>
+                <input type="hidden" id="${field.id}" name="${field.id}">
+            </div>
+        `;
+    }
 }
 
 // Add multi-value
@@ -388,7 +466,12 @@ function addMultiValue(fieldId) {
     `;
     tagsDiv.appendChild(tag);
     
-    input.value = '';
+    // Reset input - handle both text inputs and select elements
+    if (input.tagName === 'SELECT') {
+        input.selectedIndex = 0; // Reset to first option (empty)
+    } else {
+        input.value = '';
+    }
 }
 
 // Remove multi-value
@@ -738,11 +821,28 @@ function loadEntryForEdit() {
     // Setup number-infinite fields
     setupNumberInfiniteFields(formDef);
     
+    // Setup number-negative fields
+    setupNumberNegativeFields(formDef);
+    
     // Populate fields
     formDef.fields.forEach(field => {
         const element = document.getElementById(field.id);
         if (element && entry[field.id]) {
-            if (field.type === 'number-infinite') {
+            if (field.type === 'number-negative') {
+                // Handle number-negative field
+                const numberInput = document.getElementById(`${field.id}_number`);
+                const negativeCheckbox = document.getElementById(`${field.id}_negative`);
+                const value = String(entry[field.id]);
+                
+                if (value.startsWith('-')) {
+                    negativeCheckbox.checked = true;
+                    numberInput.value = value.substring(1);
+                } else {
+                    negativeCheckbox.checked = false;
+                    numberInput.value = value;
+                }
+                element.value = entry[field.id];
+            } else if (field.type === 'number-infinite') {
                 // Handle number-infinite field
                 const numberInput = document.getElementById(`${field.id}_number`);
                 const infiniteCheckbox = document.getElementById(`${field.id}_infinite`);
