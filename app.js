@@ -125,14 +125,6 @@ const categoryForms = {
             { id: 'buffs', label: 'Buffs', type: 'textarea' }
         ]
     },
-    locations: {
-        fields: [
-            { id: 'name', label: 'Location Name *', type: 'text', required: true },
-            { id: 'description', label: 'Description', type: 'textarea' },
-            { id: 'fishFound', label: 'Fish Found Here', type: 'text', multi: true },
-            { id: 'notes', label: 'Notes', type: 'textarea' }
-        ]
-    },
     location: {
         fields: [
             { id: 'name', label: 'Location Name *', type: 'text', required: true },
@@ -462,7 +454,6 @@ function parseDatabase(text) {
         season: [],
         enchanting: [],
         events: [],
-        locations: [],
         location: [],
         'radar-location': [],
         'admin-events': [],
