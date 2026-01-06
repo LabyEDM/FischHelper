@@ -167,8 +167,9 @@
   "enchanting": [],
   "events": [],
   "locations": [],
+  "location": [],
+  "radar-location": [],
   "admin-events": [],
   "totem-events": [],
-  "mini-events": [],
-  "attributes": []
+  "mini-events": []
 }

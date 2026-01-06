@@ -32,15 +32,15 @@ const categoryForms = {
     fish: {
         fields: [
             { id: 'name', label: 'Fish Name *', type: 'text', required: true },
-            { id: 'location', label: 'Location', type: 'text' },
+            { id: 'location', label: 'Location', type: 'select-dynamic', sourceArray: 'location' },
             { id: 'weight', label: 'Weight', type: 'number' },
             { id: 'rarity', label: 'Rarity *', type: 'select', required: true, options: ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'] },
             { id: 'value', label: 'Value *', type: 'number', required: true },
             { id: 'preferredBait', label: 'Preferred Bait', type: 'select-dynamic', sourceArray: 'baits' },
             { id: 'weatherCondition', label: 'Weather Condition', type: 'select-dynamic', sourceArray: 'weather' },
-            { id: 'time', label: 'Time', type: 'text' },
+            { id: 'time', label: 'Time', type: 'select', options: ['Sunrise', 'Day', 'Sunset', 'Night', 'None'] },
             { id: 'season', label: 'Season', type: 'select-dynamic', sourceArray: 'season' },
-            { id: 'radarLocation', label: 'Radar Location', type: 'text' }
+            { id: 'radarLocation', label: 'Radar Location', type: 'select-dynamic', sourceArray: 'radar-location' }
         ]
     },
     rods: {
@@ -130,6 +130,20 @@ const categoryForms = {
             { id: 'name', label: 'Location Name *', type: 'text', required: true },
             { id: 'description', label: 'Description', type: 'textarea' },
             { id: 'fishFound', label: 'Fish Found Here', type: 'text', multi: true },
+            { id: 'notes', label: 'Notes', type: 'textarea' }
+        ]
+    },
+    location: {
+        fields: [
+            { id: 'name', label: 'Location Name *', type: 'text', required: true },
+            { id: 'description', label: 'Description', type: 'textarea' },
+            { id: 'notes', label: 'Notes', type: 'textarea' }
+        ]
+    },
+    'radar-location': {
+        fields: [
+            { id: 'name', label: 'Radar Location Name *', type: 'text', required: true },
+            { id: 'description', label: 'Description', type: 'textarea' },
             { id: 'notes', label: 'Notes', type: 'textarea' }
         ]
     },
@@ -449,6 +463,8 @@ function parseDatabase(text) {
         enchanting: [],
         events: [],
         locations: [],
+        location: [],
+        'radar-location': [],
         'admin-events': [],
         'totem-events': [],
         'mini-events': []
