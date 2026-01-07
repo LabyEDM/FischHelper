@@ -98,7 +98,24 @@ jobs:
         run: |
           # Initialize database structure if file doesn't exist
           if [ ! -f "data/fishdata.json" ]; then
-            node -e "const fs = require('fs'); fs.writeFileSync('data/fishdata.json', JSON.stringify({fish:[],rods:[],baits:[],mutations:[],potions:[],utility:[],weather:[],season:[],enchanting:[],events:[],locations:[],'admin-events':[],'totem-events':[],'mini-events':[],attributes:[]}, null, 2) + '\n');"
+            cat > data/fishdata.json << 'EOF'
+{
+  "fish": [],
+  "rods": [],
+  "baits": [],
+  "mutations": [],
+  "potions": [],
+  "utility": [],
+  "weather": [],
+  "season": [],
+  "enchanting": [],
+  "events": [],
+  "locations": [],
+  "admin-events": [],
+  "totem-events": [],
+  "mini-events": []
+}
+EOF
           fi
           
           # Read existing database
@@ -177,7 +194,7 @@ jobs:
           }
           
           // Ensure all categories exist
-          const categories = ['fish', 'rods', 'baits', 'mutations', 'attributes', 'potions', 'utility', 'weather', 'season', 'enchanting', 'events', 'locations', 'admin-events', 'totem-events', 'mini-events'];
+          const categories = ['fish', 'rods', 'baits', 'mutations', 'potions', 'utility', 'weather', 'season', 'enchanting', 'events', 'locations', 'admin-events', 'totem-events', 'mini-events'];
           categories.forEach(cat => {
             if (!database[cat]) {
               database[cat] = [];
@@ -260,7 +277,7 @@ jobs:
                   database = JSON.parse(dbContent);
                 } catch (e) {
                   database = {
-                    fish: [], rods: [], baits: [], mutations: [], attributes: [], potions: [],
+                    fish: [], rods: [], baits: [], mutations: [], potions: [],
                     utility: [], weather: [], season: [], enchanting: [], events: [],
                     locations: [], 'admin-events': [], 'totem-events': [], 'mini-events': []
                   };
@@ -273,7 +290,7 @@ jobs:
                 };
               }
               
-              const categories = ['fish', 'rods', 'baits', 'mutations', 'attributes', 'potions', 'utility', 'weather', 'season', 'enchanting', 'events', 'locations', 'admin-events', 'totem-events', 'mini-events'];
+              const categories = ['fish', 'rods', 'baits', 'mutations', 'potions', 'utility', 'weather', 'season', 'enchanting', 'events', 'locations', 'admin-events', 'totem-events', 'mini-events'];
               categories.forEach(cat => {
                 if (!database[cat]) database[cat] = [];
               });
