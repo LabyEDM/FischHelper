@@ -87,6 +87,7 @@ const categoryForms = {
     utility: {
         fields: [
             { id: 'name', label: 'Item Name *', type: 'text', required: true },
+            { id: 'description', label: 'Description', type: 'textarea' },
             { id: 'ability', label: 'Bait Stats Multiplier', type: 'number', step: '0.1' }
         ]
     },
